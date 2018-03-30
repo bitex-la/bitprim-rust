@@ -16,10 +16,9 @@ impl Chain {
 
   pub fn get_last_height(&self) -> Result<u32> {
 	  let mut height = unsafe{ mem::uninitialized() };
-    let result = unsafe{ chain_get_last_height(self.0, &mut height) };
-		match result {
+    match unsafe{ chain_get_last_height(self.0, &mut height) } {
 			ExitCode::Success => Ok(height),
-			_ => bail!(ErrorKind::ErrorExitCode(result))
+			result => bail!(ErrorKind::ErrorExitCode(result))
 		}
 	}
 }

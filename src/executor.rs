@@ -41,20 +41,14 @@ impl Executor {
   }
 
 	pub fn get_chain(&self) -> Chain {
-		println!("Getting chain");
-		let chain_p = unsafe { executor_get_chain(self.0) };
-		println!("got chain");
-		Chain::new(chain_p)
+		Chain::new( unsafe { executor_get_chain(self.0) } )
 	}
 
   pub fn version() -> String {
     unsafe {
       let s = executor_version();
       if s.is_null() { panic!("executor_version was null"); }
-      CStr::from_ptr(s)
-        .to_str()
-        .expect("Version was not utf-8")
-        .to_string()
+      CStr::from_ptr(s).to_string_lossy().into_owned()
     }
   }
 
