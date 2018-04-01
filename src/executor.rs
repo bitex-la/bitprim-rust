@@ -1,12 +1,29 @@
 use std::os::raw::{c_char, c_int, c_void};
 use std::os::unix::io::AsRawFd;
 use std::ffi::{CString, CStr};
+use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::Arc;
+use std::{thread, time};
 use exit_code::ExitCode;
 use chain::{Chain, ChainP};
+use errors::*;
 
 pub enum ExecutorT {}
 pub type ExecutorP = *mut ExecutorT;
-pub struct Executor(ExecutorP);
+
+pub struct Executor{
+	raw: ExecutorP,
+	// Libbitcoin requires the main executor to be destroyed from the thread
+	// that originally created it.
+	// Also, we may have more than one executor, in separate threads, when
+	// running async.
+	// To address both issues we only destroy the original executor, and
+	// keep count of any clones to wait until they're dropped before destruction.
+	clones: Arc<AtomicUsize>,
+	original: bool
+}
+
+pub type RunHandler = extern fn(exec: ExecutorP, ctx: *mut c_void, error: ExitCode);
 
 extern "C" {
     pub fn executor_construct_fd(
@@ -15,7 +32,7 @@ extern "C" {
         serr_fd: c_int,
     ) -> ExecutorP;
     pub fn executor_destruct(exec: ExecutorP);
-    pub fn executor_run(exec: ExecutorP, ctx: *mut c_void, handler: RunHandler);
+    pub fn executor_run( exec: ExecutorP, ctx: *mut c_void, handler: Option<RunHandler>);
     pub fn executor_run_wait(exec: ExecutorP) -> ExitCode;
     pub fn executor_initchain(exec: ExecutorP) -> ExitCode;
     pub fn executor_stop(exec: ExecutorP) -> ExitCode;
@@ -30,18 +47,53 @@ impl Executor {
     where O: AsRawFd, E: AsRawFd
   {
     let path = CString::new(config_path).expect("Invalid config path");
-    let exec = unsafe{
+		let raw = unsafe{
       executor_construct_fd(path.as_ptr(), out.as_raw_fd(), err.as_raw_fd())
-    };
-    unsafe {
-      executor_initchain(exec);
-      executor_run_wait(exec);
-    };
-    Executor(exec)
+		};
+    Executor{ raw, original: true, clones: Arc::new(AtomicUsize::new(0)) }
+  }
+  
+  pub fn initchain(&self) -> ExitCode {
+    unsafe{ executor_initchain(self.raw) }
   }
 
+	pub fn run<T>(&self, handler: T) where T: FnOnce(Executor, ExitCode) {
+		self.clones.fetch_add(1, Ordering::SeqCst);
+		let raw_context = Box::into_raw(Box::new((handler, self.clones.clone()))) as *mut c_void;
+    unsafe{
+			executor_run(self.raw, raw_context, Some(Self::wrapped_handler::<T>));
+		};
+	}
+
+	extern fn wrapped_handler<F>(raw: ExecutorP, raw_context: *mut c_void, error: ExitCode)
+		where F: FnOnce(Executor, ExitCode) {
+		unsafe {
+			let context = Box::from_raw(raw_context as *mut (F, Arc<AtomicUsize>));
+			let clones = context.1.clone();
+			context.0(Executor{raw, clones, original: false}, error)
+		};
+	}
+
+	pub fn run_wait(&self) -> Result<()> {
+    match unsafe{ executor_run_wait(self.raw) } {
+			ExitCode::Success => Ok(()),
+			result => bail!(ErrorKind::ErrorExitCode(result))
+		}
+	}
+
+	pub fn stop(&self) -> Result<()> {
+    match unsafe{ executor_stop(self.raw) } {
+			ExitCode::Success => Ok(()),
+			result => bail!(ErrorKind::ErrorExitCode(result))
+		}
+	}
+
+	pub fn is_stopped(&self) -> bool {
+    (unsafe{ executor_stopped(self.raw) }) == ExitCode::ServiceStopped
+	}
+
 	pub fn get_chain(&self) -> Chain {
-		Chain::new( unsafe { executor_get_chain(self.0) } )
+		Chain::new( unsafe { executor_get_chain(self.raw) } )
 	}
 
   pub fn version() -> String {
@@ -51,15 +103,21 @@ impl Executor {
       CStr::from_ptr(s).to_string_lossy().into_owned()
     }
   }
-
-  pub fn destruct(&self) {
-    unsafe { executor_destruct(self.0) }
-  }
 }
 
-pub type RunHandler = Option<
-    unsafe extern "C" fn(exec: ExecutorP, ctx: *mut c_void, error: ExitCode)
->;
+impl Drop for Executor {
+    fn drop(&mut self) {
+				if self.original {
+					while self.clones.load(Ordering::Relaxed) > 0 {
+					  thread::sleep(time::Duration::from_millis(100));
+					}
+					unsafe{ executor_destruct(self.raw) }
+				}else{
+					self.clones.fetch_sub(1, Ordering::SeqCst);
+				}
+    }
+}
+
 /*
 FILE structs are not supported yet, so executor_construct is not implemented
 

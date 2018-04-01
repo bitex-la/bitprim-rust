@@ -1,5 +1,5 @@
 #[repr(C)]
-#[derive(Debug)]
+#[derive(Debug,PartialEq)]
 pub enum ExitCode {
   Success = 0,
   ServiceStopped = 1,
