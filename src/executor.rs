@@ -6,6 +6,7 @@ use std::sync::Arc;
 use std::{thread, time};
 use exit_code::ExitCode;
 use chain::{Chain, ChainP};
+use p2p::{P2p, P2pP};
 use errors::*;
 
 pub enum ExecutorT {}
@@ -23,8 +24,6 @@ pub struct Executor{
 	original: bool
 }
 
-pub type RunHandler = extern fn(exec: ExecutorP, ctx: *mut c_void, error: ExitCode);
-
 extern "C" {
     pub fn executor_construct_fd(
         path: *const c_char,
@@ -32,13 +31,20 @@ extern "C" {
         serr_fd: c_int,
     ) -> ExecutorP;
     pub fn executor_destruct(exec: ExecutorP);
-    pub fn executor_run( exec: ExecutorP, ctx: *mut c_void, handler: Option<RunHandler>);
+    pub fn executor_run(
+				exec: ExecutorP,
+				context: *mut c_void,
+				handler: Option<unsafe extern fn(
+          exec: ExecutorP,
+          context: *mut c_void,
+          error: ExitCode)>);
+
     pub fn executor_run_wait(exec: ExecutorP) -> ExitCode;
     pub fn executor_initchain(exec: ExecutorP) -> ExitCode;
     pub fn executor_stop(exec: ExecutorP) -> ExitCode;
     pub fn executor_stopped(exec: ExecutorP) -> ExitCode;
     pub fn executor_get_chain(exec: ExecutorP) -> ChainP;
-    //pub fn executor_get_p2p(exec: ExecutorP) -> p2p_t;
+    pub fn executor_get_p2p(exec: ExecutorP) -> P2pP;
     pub fn executor_version() -> *const c_char;
 }
 
@@ -53,38 +59,44 @@ impl Executor {
     Executor{ raw, original: true, clones: Arc::new(AtomicUsize::new(0)) }
   }
   
-  pub fn initchain(&self) -> ExitCode {
-    unsafe{ executor_initchain(self.raw) }
+  pub fn initchain(&self) -> Result<ExitCode> {
+    let result = unsafe{ executor_initchain(self.raw) };
+		match result {
+			ExitCode::Success | ExitCode::OperationFailed => Ok(result),
+			_ => bail!(ErrorKind::ErrorExitCode(result))
+		}
   }
 
-	pub fn run<T>(&self, handler: T) where T: FnOnce(Executor, ExitCode) {
+	pub fn run<H>(&self, handler: H) where H: FnOnce(Executor, ExitCode) {
 		self.clones.fetch_add(1, Ordering::SeqCst);
 		let raw_context = Box::into_raw(Box::new((handler, self.clones.clone()))) as *mut c_void;
     unsafe{
-			executor_run(self.raw, raw_context, Some(Self::wrapped_handler::<T>));
+			executor_run(self.raw, raw_context, Some(Self::run_handler::<H>));
 		};
 	}
 
-	extern fn wrapped_handler<F>(raw: ExecutorP, raw_context: *mut c_void, error: ExitCode)
-		where F: FnOnce(Executor, ExitCode) {
+	extern fn run_handler<H>(raw: ExecutorP, raw_context: *mut c_void, error: ExitCode)
+		where H: FnOnce(Executor, ExitCode) {
 		unsafe {
-			let context = Box::from_raw(raw_context as *mut (F, Arc<AtomicUsize>));
+			let context = Box::from_raw(raw_context as *mut (H, Arc<AtomicUsize>));
 			let clones = context.1.clone();
 			context.0(Executor{raw, clones, original: false}, error)
 		};
 	}
 
-	pub fn run_wait(&self) -> Result<()> {
-    match unsafe{ executor_run_wait(self.raw) } {
-			ExitCode::Success => Ok(()),
-			result => bail!(ErrorKind::ErrorExitCode(result))
+	pub fn run_wait(&self) -> Result<ExitCode> {
+		let result = unsafe{ executor_run_wait(self.raw) };
+		match result {
+			ExitCode::Success => Ok(result),
+			_ => bail!(ErrorKind::ErrorExitCode(result))
 		}
 	}
 
-	pub fn stop(&self) -> Result<()> {
-    match unsafe{ executor_stop(self.raw) } {
-			ExitCode::Success => Ok(()),
-			result => bail!(ErrorKind::ErrorExitCode(result))
+	pub fn stop(&self) -> Result<ExitCode> {
+		let result = unsafe{ executor_stop(self.raw) };
+    match result {
+			ExitCode::Success | ExitCode::ServiceStopped => Ok(result),
+			_ => bail!(ErrorKind::ErrorExitCode(result))
 		}
 	}
 
@@ -94,6 +106,10 @@ impl Executor {
 
 	pub fn get_chain(&self) -> Chain {
 		Chain::new( unsafe { executor_get_chain(self.raw) } )
+	}
+
+	pub fn get_p2p(&self) -> P2p {
+		P2p::new( unsafe { executor_get_p2p(self.raw) } )
 	}
 
   pub fn version() -> String {
@@ -109,7 +125,7 @@ impl Drop for Executor {
     fn drop(&mut self) {
 				if self.original {
 					while self.clones.load(Ordering::Relaxed) > 0 {
-					  thread::sleep(time::Duration::from_millis(100));
+					  thread::sleep(time::Duration::from_millis(10));
 					}
 					unsafe{ executor_destruct(self.raw) }
 				}else{

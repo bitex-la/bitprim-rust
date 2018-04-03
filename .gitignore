@@ -4,4 +4,4 @@
 Cargo.lock
 **/*.swp
 **/*.swo
-test/btc-testnet-files/*
+tests/btc-testnet-files/*
