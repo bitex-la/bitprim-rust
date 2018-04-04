@@ -24,6 +24,27 @@ pub struct Executor{
 	original: bool
 }
 
+impl Clone for Executor {
+  fn clone(&self) -> Executor {
+    self.clones.fetch_add(1, Ordering::SeqCst);
+    Executor{ raw: self.raw, clones: self.clones.clone(), original: false }
+  }
+}
+
+impl Drop for Executor {
+    fn drop(&mut self) {
+				if self.original {
+					while self.clones.load(Ordering::SeqCst) > 0 {
+					  thread::sleep(time::Duration::from_millis(100));
+					}
+					unsafe{ executor_destruct(self.raw) }
+				}else{
+					self.clones.fetch_sub(1, Ordering::SeqCst);
+				}
+    }
+}
+
+
 extern_async_and_sync!{ ExecutorP, executor_run, executor_run_wait, {}, {} }
 
 extern {
@@ -51,29 +72,28 @@ impl Executor {
 		};
     Executor{ raw, original: true, clones: Arc::new(AtomicUsize::new(0)) }
   }
-  
+
   pub fn initchain(&self) -> Result<ExitCode> {
     let result = unsafe{ executor_initchain(self.raw) };
 		match result {
-			ExitCode::Success | ExitCode::OperationFailed => Ok(result),
+			ExitCode::Success | ExitCode::ServiceStopped | ExitCode::OperationFailed => Ok(result),
 			_ => bail!(ErrorKind::ErrorExitCode(result))
 		}
   }
 
 	pub fn run<H>(&self, handler: H) where H: FnOnce(Executor, ExitCode) {
-		self.clones.fetch_add(1, Ordering::SeqCst);
-		let raw_context = Box::into_raw(Box::new((handler, self.clones.clone()))) as *mut c_void;
+		let raw_context = Box::into_raw(Box::new(Some((handler, self.clone())))) as *mut c_void;
     unsafe{
 			executor_run(self.raw, raw_context, Some(Self::run_handler::<H>));
 		};
 	}
 
-	extern fn run_handler<H>(raw: ExecutorP, raw_context: *mut c_void, error: ExitCode)
+	extern fn run_handler<H>(_raw: ExecutorP, raw_context: *mut c_void, error: ExitCode)
 		where H: FnOnce(Executor, ExitCode) {
 		unsafe {
-			let context = Box::from_raw(raw_context as *mut (H, Arc<AtomicUsize>));
-			let clones = context.1.clone();
-			context.0(Executor{raw, clones, original: false}, error)
+			let mut context = Box::from_raw(raw_context as *mut Option<(H, Executor)>);
+      let (handler, this) = context.take().unwrap();
+			handler(this, error)
 		};
 	}
 
@@ -98,7 +118,8 @@ impl Executor {
 	}
 
 	pub fn get_chain(&self) -> Chain {
-		Chain::new( unsafe { executor_get_chain(self.raw) } )
+		let raw = unsafe { executor_get_chain(self.raw) };
+		Chain::new(raw, self.clone())
 	}
 
 	pub fn get_p2p(&self) -> P2p {
@@ -113,20 +134,6 @@ impl Executor {
     }
   }
 }
-
-impl Drop for Executor {
-    fn drop(&mut self) {
-				if self.original {
-					while self.clones.load(Ordering::Relaxed) > 0 {
-					  thread::sleep(time::Duration::from_millis(10));
-					}
-					unsafe{ executor_destruct(self.raw) }
-				}else{
-					self.clones.fetch_sub(1, Ordering::SeqCst);
-				}
-    }
-}
-
 /*
 FILE structs are not supported yet, so executor_construct is not implemented
 

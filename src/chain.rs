@@ -4,30 +4,21 @@ use exit_code::ExitCode;
 use errors::*;
 use hash::Hash;
 use header::HeaderP;
-use block::BlockP;
+use block::{BlockP, Block};
 use merkle_block::MerkleBlockP;
 use compact_block::CompactBlockP;
 use history_compact_list::HistoryCompactListP;
 use payment_address::PaymentAddressP;
 use binary::BinaryP;
 use transaction::TransactionP;
-use executor::ExecutorP;
+use executor::{ExecutorP, Executor};
 use stealth_compact_list::StealthCompactListP;
 use block_list::BlockListP;
 use output_point::OutputPointP;
 use input_point::InputPointP;
 
-pub enum ChainT {}
-pub type ChainP = *mut ChainT;
-pub struct Chain(ChainP);
-
 extern_asyncs_and_syncs!{
   ChainP,
-  ( chain_fetch_last_height,
-    chain_get_last_height,
-    {},
-    {height: u64}
-  ),
   ( chain_fetch_block_height,
     chain_get_block_height,
     {hash: Hash},
@@ -47,11 +38,6 @@ extern_asyncs_and_syncs!{
     chain_get_block_header_by_hash,
     {hash: Hash},
     {header: HeaderP, height: u64}
-  ),
-  ( chain_fetch_block_by_height, 
-    chain_get_block_by_height,
-    {height: u64},
-    {block: BlockP, height: u64}
   ),
   ( chain_fetch_block_by_hash,
     chain_get_block_by_hash,
@@ -151,14 +137,102 @@ extern {
   );
 }
 
-impl Chain {
-	pub fn new(chain_p: ChainP) -> Chain { Chain(chain_p) }
-  
-  pub fn get_last_height(&self) -> Result<u64> {
-	  let mut height = unsafe{ mem::uninitialized() };
-    match unsafe{ chain_get_last_height(self.0, &mut height) } {
-			ExitCode::Success => Ok(height),
-			result => bail!(ErrorKind::ErrorExitCode(result))
-		}
-	}
+fn id<T>(v:T) -> T { v }
+
+opaque_resource_mapper!{
+  ChainT, ChainP, Chain {
+    exec: Executor
+  }
+
+  async_and_sync_mappings {
+    { chain_fetch_last_height: fetch_last_height,
+      chain_get_last_height: get_last_height,
+      in: [],
+      out: [(height, u64, u64, id)]
+    },
+    { chain_fetch_block_by_height: fetch_block_by_height,
+      chain_get_block_by_height: get_block_by_height,
+      in: [(height, u64)],
+      out: [(block, BlockP, Block, Block::new), (new_height, u64, u64, id)]
+    }
+  }
+
+  impl {
+    pub fn fetch_last_height<H>(&self, handler: H)
+      where H: FnOnce(Chain, ExitCode, u64)
+    {
+      extern fn raw_handler<H>(raw: ChainP, raw_context: *mut c_void, error: ExitCode, height: u64)
+        where H: FnOnce(Chain, ExitCode, u64) {
+        unsafe {
+          let mut context = Box::from_raw(raw_context as *mut Option<(H, Chain)>);
+          let (handler, this) = context.take().unwrap();
+          handler(Chain{raw, ..this}, error, height);
+        };
+      }
+
+      let raw_context = Box::into_raw(Box::new(Some((handler, self.clone())))) as *mut c_void;
+      unsafe{ chain_fetch_last_height(self.raw, raw_context, Some(raw_handler::<H>) )}
+    }
+
+    /*
+    pub fn get_block_by_height(&self, height: u64) -> Result<Block> {
+      let mut block_p = unsafe{ mem::uninitialized() };
+      let mut new_height = unsafe{ mem::uninitialized() };
+      match unsafe{ chain_get_block_by_height(self.raw, height, &mut block_p, &mut new_height) } {
+        ExitCode::Success => Ok(Block::new(block_p)),
+        result => bail!(ErrorKind::ErrorExitCode(result))
+      }
+    }
+    */
+
+    pub fn fetch_block_by_height<H>(&self, height: u64, handler: H)
+      where H: FnOnce(Chain, ExitCode, Block)
+    {
+      extern fn raw_handler<H>(
+        raw: ChainP,
+        raw_context: *mut c_void,
+        error: ExitCode,
+        block_p: BlockP,
+        height: u64
+        ) where H: FnOnce(Chain, ExitCode, Block)
+      {
+        unsafe {
+          let mut context = Box::from_raw(raw_context as *mut Option<(H, Chain)>);
+          let (handler, this) = context.take().unwrap();
+          handler(Chain{raw, ..this}, error, Block::new(block_p));
+        };
+      }
+
+      let raw_context = Box::into_raw(Box::new(Some((handler, self.clone())))) as *mut c_void;
+      unsafe{ chain_fetch_block_by_height(self.raw, raw_context, height, Some(raw_handler::<H>) )}
+    }
+
+    pub fn get_block_height(&self, hash: Hash) -> Result<u64> {
+      let mut height = unsafe{ mem::uninitialized() };
+      match unsafe{ chain_get_block_height(self.raw, hash, &mut height) } {
+        ExitCode::Success => Ok(height),
+        result => bail!(ErrorKind::ErrorExitCode(result))
+      }
+    }
+    pub fn fetch_block_height<H>(&self, hash: Hash, handler: H)
+      where H: FnOnce(Chain, ExitCode, u64)
+    {
+      extern fn raw_handler<H>(
+        raw: ChainP,
+        raw_context: *mut c_void,
+        error: ExitCode,
+        height: u64
+        ) where H: FnOnce(Chain, ExitCode, u64)
+      {
+        unsafe {
+          let mut context = Box::from_raw(raw_context as *mut Option<(H, Chain)>);
+          let (handler, this) = context.take().unwrap();
+          handler(Chain{raw, ..this}, error, height);
+        };
+      }
+
+      let raw_context = Box::into_raw(Box::new(Some((handler, self.clone())))) as *mut c_void;
+      unsafe{ chain_fetch_block_height(self.raw, raw_context, hash, Some(raw_handler::<H>) )}
+    }
+  }
 }
