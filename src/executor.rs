@@ -24,22 +24,15 @@ pub struct Executor{
 	original: bool
 }
 
-extern "C" {
+extern_async_and_sync!{ ExecutorP, executor_run, executor_run_wait, {}, {} }
+
+extern {
     pub fn executor_construct_fd(
         path: *const c_char,
-        sout_fd: c_int,
-        serr_fd: c_int,
+        out_fd: c_int,
+        err_fd: c_int,
     ) -> ExecutorP;
     pub fn executor_destruct(exec: ExecutorP);
-    pub fn executor_run(
-				exec: ExecutorP,
-				context: *mut c_void,
-				handler: Option<unsafe extern fn(
-          exec: ExecutorP,
-          context: *mut c_void,
-          error: ExitCode)>);
-
-    pub fn executor_run_wait(exec: ExecutorP) -> ExitCode;
     pub fn executor_initchain(exec: ExecutorP) -> ExitCode;
     pub fn executor_stop(exec: ExecutorP) -> ExitCode;
     pub fn executor_stopped(exec: ExecutorP) -> ExitCode;

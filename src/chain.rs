@@ -1,43 +1,28 @@
 use std::mem;
-use std::os::raw::c_void;
+use std::os::raw::{c_int, c_void, c_char};
 use exit_code::ExitCode;
 use errors::*;
 use hash::Hash;
 use header::HeaderP;
+use block::BlockP;
+use merkle_block::MerkleBlockP;
+use compact_block::CompactBlockP;
+use history_compact_list::HistoryCompactListP;
+use payment_address::PaymentAddressP;
+use binary::BinaryP;
+use transaction::TransactionP;
+use executor::ExecutorP;
+use stealth_compact_list::StealthCompactListP;
+use block_list::BlockListP;
+use output_point::OutputPointP;
+use input_point::InputPointP;
 
 pub enum ChainT {}
 pub type ChainP = *mut ChainT;
 pub struct Chain(ChainP);
 
-macro_rules! extern_fetcher_and_getter {
-  ($fetcher:ident, $getter:ident,
-   {$($in:ident: $in_type:ty),*}, {$($out:ident: $out_type:ty),*}
-  ) => {
-    extern {
-      pub fn $fetcher(
-        chain: ChainP,
-        context: *mut c_void,
-        $($in: $in_type,)*
-        handler: Option<unsafe extern fn(
-          chain: ChainP,
-          context: *mut c_void,
-          exit_code: ExitCode,
-          $($out: $out_type,)*
-          )>);
-      pub fn $getter(
-        chain: ChainP,
-        $($in: $in_type,)*
-        $($out: *mut $out_type,)*
-      ) -> ExitCode;
-    }
-  }
-}
-
-macro_rules! extern_fetchers_and_getters {
-  ((($params:tt)),*) => { $(fetcher_and_getter!($params)),* }
-}
-
-extern_fetchers_and_getters!{
+extern_asyncs_and_syncs!{
+  ChainP,
   ( chain_fetch_last_height,
     chain_get_last_height,
     {},
@@ -107,63 +92,63 @@ extern_fetchers_and_getters!{
     chain_get_stealth,
     {filter: BinaryP, from_height: u64},
     {out_list: StealthCompactListP}
+  ),
+  ( chain_organize_block,
+    chain_organize_block_sync,
+    {block: BlockP},
+    {}
+  ),
+  ( chain_organize_transaction,
+    chain_organize_transaction_sync,
+    {transaction: TransactionP},
+    {}
   )
 }
 
-extern {
-/*
-  pub fn chain_subscribe_blockchain(
-      exec: executor_t,
-      chain: ChainP,
-      context: *mut c_void,
-      handler: subscribe_blockchain_handler_t,
-  );
-  pub fn chain_subscribe_transaction(
-      exec: executor_t,
-      chain: ChainP,
-      context: *mut c_void,
-      handler: subscribe_transaction_handler_t,
-  );
-  pub fn chain_unsubscribe(chain: ChainP);
-  pub fn chain_organize_block(
-      chain: ChainP,
-      context: *mut c_void,
-      block: block_t,
-      handler: result_handler_t,
-  );
-  pub fn chain_organize_block_sync(chain: ChainP, block: block_t) -> c_int;
+extern_async!{
+  ChainP,
+  chain_validate_tx,
+  {tx: TransactionP},
+  {something: *const c_char}
+}
 
-  pub fn chain_organize_transaction(
-      chain: ChainP,
-      context: *mut c_void,
-      transaction: transaction_t,
-      handler: result_handler_t,
-  );
-  pub fn chain_organize_transaction_sync(
-      chain: ChainP,
-      transaction: transaction_t,
-  ) -> c_int;
-  pub fn hex_to_tx(tx_hex: *const c_char) -> transaction_t;
-  pub fn chain_validate_tx(
-      chain: ChainP,
-      context: *mut c_void,
-      tx: transaction_t,
-      handler: validate_tx_handler_t,
-  );
-  pub fn chain_is_stale(chain: ChainP) -> c_int;
-  */
+extern_async!{
+  ChainP,
+  chain_fetch_spend,
+  {output_point: OutputPointP},
+  {input_point: InputPointP}
 }
 
 extern {
-  pub fn chain_fetch_spend(
+  pub fn hex_to_tx(tx_hex: *const c_char) -> TransactionP;
+  pub fn chain_is_stale(chain: ChainP) -> c_int;
+  pub fn chain_unsubscribe(chain: ChainP);
+  pub fn chain_subscribe_blockchain(
+      exec: ExecutorP,
       chain: ChainP,
       context: *mut c_void,
-      op: output_point_t,
-      handler: Option<unsafe extern fn(
+      handler: Option< unsafe extern fn(
+        exec: ExecutorP,
         chain: ChainP,
         context: *mut c_void,
         exit_code: ExitCode,
-        input_point: InputPointP)>);
+        height: u64,
+        blocks_a: BlockListP,
+        blocks_b: BlockListP)
+        -> c_int >
+  );
+  pub fn chain_subscribe_transaction(
+      exec: ExecutorP,
+      chain: ChainP,
+      context: *mut c_void,
+      handler: Option< unsafe extern fn(
+        exec: ExecutorP,
+        chain: ChainP,
+        context: *mut c_void,
+        exit_code: ExitCode,
+        transaction: TransactionP
+        ) -> c_int >
+  );
 }
 
 impl Chain {

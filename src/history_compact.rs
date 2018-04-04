@@ -1,5 +1,3 @@
-use std::os::raw::{c_int};
-use hash::Hash;
 use point::PointP;
 use point_kind::PointKind;
 

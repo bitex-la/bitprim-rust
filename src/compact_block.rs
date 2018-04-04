@@ -1,6 +1,7 @@
-use block::BlockP;
+use std::os::raw::c_int;
 use transaction::TransactionP;
 use header::HeaderP;
+
 pub enum CompactBlockT {}
 pub type CompactBlockP = *mut CompactBlockT;
 pub struct CompactBlock(CompactBlockP);

@@ -1,5 +1,3 @@
-use std::os::raw::{c_int};
-use hash::Hash;
 use history_compact::HistoryCompactP;
 
 pub enum HistoryCompactListT {}
