@@ -1,6 +1,3 @@
-/*
-
-*/
 macro_rules! opaque_resource_mapper {
   ( $enum:ident, $ptr:ident, $struct:ident {
       $($name:ident: $type:ty),*
@@ -46,15 +43,56 @@ macro_rules! impl_async_and_sync {
   }
 }
 
+macro_rules! expand_out {
+  (($out:ident, $out_inner:ty, $out_outer:expr)) => {
+    ($out, $out_inner, $out_outer, $out_outer::new($out))
+  };
+  (($out:ident, $type:ty)) => {
+    ($out, $type, $out, $type)
+  };
+  ($all:tt) => { $all }
+}
+
+macro_rules! out_name {
+  (($name:ident, $inner:ty, $outer:ty, $value:expr)) => { $name }
+}
+macro_rules! out_inner_type {
+  (($out:ident, $inner:ty, $outer:ty, $value:expr)) => { $inner }
+}
+macro_rules! out_outer_type {
+  (($out:ident, $inner:ty, $outer:ty, $value:expr)) => { $outer }
+}
+macro_rules! out_value {
+  (($out:ident, $inner:ty, $outer:ty, $value:expr)) => { $value }
+}
+
+macro_rules! out_uninitialized {
+  (($name:ident, $inner:ty, $outer:ty, $value:expr)) => {
+    let mut $name = unsafe{ mem::uninitialized() };
+  }
+}
+
+macro_rules! out_name_as_mut_ref {
+  (($name:ident, $inner:ty, $outer:ty, $value:expr)) => {
+    &mut $name
+  }
+}
+
+macro_rules! out_name_as_mut_ptr {
+  (($name:ident, $inner:ty, $outer:ty, $value:expr)) => {
+    *mut $name
+  }
+}
+
 macro_rules! impl_sync {
   ($ptr:ty, $extern_sync:ident, $sync:ident,
    [$(($in:ident, $in_type:ty)),*],
-   [$(($out:ident, $out_inner:ty, $out_outer:ty, $out_outer_value:expr)),*]
+   [$($out:tt),*]
   ) => {
-    pub fn $sync(&self, $($in: $in_type),*) -> Result<($($out_outer),*)> {
-      $(let mut $out = unsafe{ mem::uninitialized() };)*
-      match unsafe{ $extern_sync(self.raw, $($in,)* $(&mut $out),*) } {
-        ExitCode::Success => Ok(($($out_outer_value),*)),
+    pub fn $sync(&self, $($in: $in_type),*) -> Result<($(out_outer_type!($out)),*)> {
+      $(out_uninitialized!($out);)*
+      match unsafe{ $extern_sync(self.raw, $($in,)* $(out_name_as_mut_ref!($out)),* ) } {
+        ExitCode::Success => Ok(($(out_value!($out)),*)),
         result => bail!(ErrorKind::ErrorExitCode(result))
       }
     }
@@ -64,22 +102,22 @@ macro_rules! impl_sync {
 macro_rules! impl_async {
   ($struct:tt, $ptr:ty, $extern_async:ident, $async:ident,
    [$(($in:ident, $in_type:ty)),*],
-   [$(($out:ident, $out_inner:ty, $out_outer:ty, $out_outer_value:expr)),*]
+   [$($out:tt),*]
   ) => {
     pub fn $async<H>(&self, $($in: $in_type,)* handler: H)
-      where H: FnOnce($struct, ExitCode, $($out_outer),*)
+      where H: FnOnce($struct, ExitCode, $(out_outer_type!($out)),*)
     {
       extern fn raw_handler<H>(
         raw: $ptr,
         raw_context: *mut c_void,
         error: ExitCode,
-        $($out: $out_inner),*
-        ) where H: FnOnce($struct, ExitCode, $($out_outer),*)
+        $(out_name!($out): out_inner_type!($out)),*
+        ) where H: FnOnce($struct, ExitCode, $(out_outer_type!($out)),*)
       {
         unsafe {
           let mut context = Box::from_raw(raw_context as *mut Option<(H, $struct)>);
           let (handler, this) = context.take().unwrap();
-          handler($struct{raw, ..this}, error, $($out_outer_value),*);
+          handler($struct{raw, ..this}, error, $(out_value!($out)),*);
         };
       }
 
@@ -116,7 +154,7 @@ macro_rules! extern_async_and_sync {
 macro_rules! extern_async {
   ($main_type:ty, $async:ident,
    [$(($in:ident, $in_type:ty)),*],
-   [$(($out:ident, $out_inner:ty, $out_outer:ty, $out_conv:path)),*]
+   [$($out:tt),*]
   ) => {
     extern {
       pub fn $async(
@@ -124,10 +162,10 @@ macro_rules! extern_async {
         context: *mut c_void,
         $($in: $in_type,)*
         handler: Option<unsafe extern fn(
-          this: $main_type,
-          context: *mut c_void,
-          exit_code: ExitCode,
-          $($out: $out_inner),*
+          $main_type,
+          *mut c_void,
+          ExitCode,
+          $(out_inner_type!($out),)*
           )>);
     }
   }
@@ -140,13 +178,13 @@ macro_rules! extern_async {
 macro_rules! extern_sync {
   ($main_type:ty, $sync:ident,
    [$(($in:ident, $in_type:ty)),*],
-   [$(($out:ident, $out_inner:ty, $out_outer:ty, $out_conv:path)),*]
+   [$($out:tt),*]
   ) => {
     extern {
       pub fn $sync(
         this: $main_type,
         $($in: $in_type,)*
-        $($out: *mut $out_inner),*
+        $(out_name!($out): *mut out_inner_type!($out)),*
       ) -> ExitCode;
     }
   }

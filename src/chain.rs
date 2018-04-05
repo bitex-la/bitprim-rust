@@ -172,11 +172,11 @@ opaque_resource_mapper!{
         chain: ChainP,
         context: *mut c_void,
         handler: Option< unsafe extern fn(
-          exec: ExecutorP,
-          chain: ChainP,
-          context: *mut c_void,
-          exit_code: ExitCode,
-          transaction: TransactionP
+          ExecutorP,
+          ChainP,
+          *mut c_void,
+          ExitCode,
+          TransactionP
           ) -> c_int >
     );
   }
