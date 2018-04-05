@@ -4,11 +4,11 @@ use input_list::InputListP;
 use output_list::OutputListP;
 use script::ScriptP;
 
-pub enum TransactionT {}
-pub type TransactionP = *mut TransactionT;
-pub struct Transaction(TransactionP);
-
-extern "C" {
+opaque_resource_mapper!{
+  TransactionT, TransactionP, Transaction {}
+  async_and_sync {}
+  impl {}
+  extern { 
     pub fn chain_transaction_construct_default() -> TransactionP;
     pub fn chain_transaction_construct(
         version: u32,
@@ -78,4 +78,5 @@ extern "C" {
         wire: c_int,
         out_size: *mut u64,
     ) -> *const u8;
+  }
 }

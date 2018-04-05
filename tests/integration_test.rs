@@ -1,4 +1,4 @@
-#[macro_use] extern crate error_chain;
+extern crate error_chain;
 extern crate bitprim;
 
 use std::fs::File;
@@ -87,11 +87,11 @@ assert_ok!{ gets_earliest_transaction_block {
 assert_ok!{ fetches_earliest_transaction_block {
   let exec = build_400_blocks_executor()?;
   let chain = exec.get_chain();
-  chain.fetch_block_by_height(381, |new_chain, _, block|{
+  chain.fetch_block_by_height(381, |new_chain, _, block, _height|{
     assert!(block.hash().to_hex() ==
       "000000001a4c2c64beded987790ab0c00675b4bc467cd3574ad455b1397c967c");
     assert!(block.transaction_count() == 2);
-    new_chain.fetch_block_height(block.hash(), |_, _, height|{
+    new_chain.fetch_block_height(block.hash(), |_, _, height:u64|{
       assert!(height == 381);
     });
   })

@@ -1,3 +1,6 @@
-pub enum InputPointT {}
-pub type InputPointP = *mut InputPointT;
-pub struct InputPoint(InputPointP);
+opaque_resource_mapper!{
+  InputPointT, InputPointP, InputPoint {}
+  async_and_sync {}
+  impl {}
+  extern {}
+}

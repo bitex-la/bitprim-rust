@@ -1,11 +1,11 @@
 use hash::Hash;
 use short_hash::ShortHash;
 
-pub enum StealthCompactT {}
-pub type StealthCompactP = *mut StealthCompactT;
-pub struct StealthCompact(StealthCompactP);
-
-extern "C" {
+opaque_resource_mapper!{
+  StealthCompactT, StealthCompactP, StealthCompact {}
+  async_and_sync {}
+  impl {}
+  extern { 
     pub fn stealth_compact_get_ephemeral_public_key_hash(stealth: StealthCompactP) -> Hash;
     pub fn stealth_compact_get_ephemeral_public_key_hash_out(
         stealth: StealthCompactP,
@@ -21,4 +21,5 @@ extern "C" {
         stealth: StealthCompactP,
         out_pk_hash: *mut ShortHash,
     );
+  }
 }

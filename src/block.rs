@@ -1,19 +1,23 @@
-use std::mem;
-use exit_code::ExitCode;
-use errors::*;
 use std::os::raw::{c_char, c_int};
 use header::HeaderP;
 use hash::Hash;
 use transaction::TransactionP;
 use transaction_list::TransactionListP;
 
-pub enum BlockT {}
-pub type BlockP = *mut BlockT;
-pub struct Block{
-  raw: BlockP
-}
+opaque_resource_mapper!{
+  BlockT, BlockP, Block {}
+  async_and_sync {}
+  
+  impl {
+    pub fn transaction_count(&self) -> u64 {
+      unsafe{ chain_block_transaction_count(self.raw) }
+    }
+    pub fn hash(&self) -> Hash {
+      unsafe{ chain_block_hash(self.raw) }
+    }
+  }
 
-extern "C" {
+  extern { 
     pub fn chain_block_construct_default() -> BlockP;
     pub fn chain_block_construct(header: HeaderP, transactions: TransactionListP) -> BlockP;
     pub fn chain_block_destruct(block: BlockP);
@@ -59,14 +63,5 @@ extern "C" {
         wire: c_int,
         out_size: *mut u64,
     ) -> *const u8;
-}
-
-impl Block {
-    pub fn new(raw: BlockP) -> Block { Block{raw} }
-    pub fn transaction_count(&self) -> u64 {
-      unsafe{ chain_block_transaction_count(self.raw) }
-    }
-    pub fn hash(&self) -> Hash {
-      unsafe{ chain_block_hash(self.raw) }
-    }
+  }
 }

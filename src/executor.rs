@@ -44,8 +44,12 @@ impl Drop for Executor {
     }
 }
 
-
-extern_async_and_sync!{ ExecutorP, executor_run, executor_run_wait, {}, {} }
+extern_async_and_sync!{ ExecutorP {
+  executor_run: run,
+  executor_run_wait: run_wait,
+  in: [],
+  out: []
+}}
 
 extern {
     pub fn executor_construct_fd(

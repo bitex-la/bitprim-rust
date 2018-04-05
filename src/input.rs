@@ -2,11 +2,11 @@ use std::os::raw::c_int;
 use output_point::OutputPointP;
 use script::ScriptP;
 
-pub enum InputT {}
-pub type InputP = *mut InputT;
-pub struct Input(InputP);
-
-extern "C" {
+opaque_resource_mapper!{
+  InputT, InputP, Input {}
+  async_and_sync {}
+  impl {}
+  extern { 
     pub fn chain_input_construct_default() -> InputP;
     pub fn chain_input_construct(
         previous_output: OutputPointP,
@@ -24,4 +24,5 @@ extern "C" {
     ) -> u64;
     pub fn chain_input_script(input: InputP) -> ScriptP;
     pub fn chain_input_previous_output(input: InputP) -> OutputPointP;
+  }
 }

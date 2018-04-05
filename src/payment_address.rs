@@ -1,10 +1,10 @@
 use std::os::raw::{c_char, c_int};
 
-pub enum PaymentAddressT {}
-pub type PaymentAddressP = *mut PaymentAddressT;
-pub struct PaymentAddress(PaymentAddressP);
-
-extern "C" {
+opaque_resource_mapper!{
+  PaymentAddressT, PaymentAddressP, PaymentAddress {}
+  async_and_sync {}
+  impl {}
+  extern { 
     pub fn chain_payment_address_encoded(
         payment_address: PaymentAddressP,
     ) -> *const c_char;
@@ -16,4 +16,5 @@ extern "C" {
         payment_address: PaymentAddressP,
     ) -> c_int;
     pub fn chain_payment_address_destruct(payment_address: PaymentAddressP);
+  }
 }

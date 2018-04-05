@@ -1,10 +1,10 @@
 use std::os::raw::{c_int, c_char};
 
-pub enum ScriptT {}
-pub type ScriptP = *mut ScriptT;
-pub struct Script(ScriptP);
-
-extern "C" {
+opaque_resource_mapper!{
+  ScriptT, ScriptP, Script {}
+  async_and_sync {}
+  impl {}
+  extern { 
     pub fn chain_script_destruct(script: ScriptP);
     pub fn chain_script_is_valid(script: ScriptP) -> c_int;
     pub fn chain_script_is_valid_operations(script: ScriptP) -> c_int;
@@ -22,4 +22,5 @@ extern "C" {
     ) -> *const u8;
     pub fn chain_script_sigops(script: ScriptP, embedded: c_int) -> u64;
     pub fn chain_script_embedded_sigops(script: ScriptP, prevout_script: ScriptP) -> u64;
+  }
 }

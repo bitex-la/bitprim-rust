@@ -2,11 +2,11 @@ use script::ScriptP;
 use payment_address::PaymentAddressP;
 use std::os::raw::c_int;
 
-pub enum OutputT {}
-pub type OutputP = *mut OutputT;
-pub struct Output(OutputP);
-
-extern "C" {
+opaque_resource_mapper!{
+  OutputT, OutputP, Output {}
+  async_and_sync {}
+  impl {}
+  extern { 
     pub fn chain_output_construct_default() -> OutputP;
     pub fn chain_output_construct(value: u64, script: ScriptP) -> OutputP;
     pub fn chain_output_destruct(output: OutputP);
@@ -19,4 +19,5 @@ extern "C" {
         output: OutputP,
         use_testnet_rules: c_int,
     ) -> PaymentAddressP;
+  }
 }
