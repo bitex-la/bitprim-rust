@@ -26,20 +26,17 @@ opaque_resource_mapper!{
     { chain_fetch_last_height: fetch_last_height,
       chain_get_last_height: get_last_height,
       in: [],
-      out: [(height, u64, u64, height)]
+      out: [(height, u64)]
     },
     { chain_fetch_block_by_height: fetch_block_by_height,
       chain_get_block_by_height: get_block_by_height,
       in: [(height, u64)],
-      out: [
-        (block, BlockP, Block, Block::new(block)),
-        (new_height, u64, u64, new_height)
-      ]
+      out: [ (block, BlockP, Block), (new_height, u64) ]
     },
     { chain_fetch_block_height: fetch_block_height,
       chain_get_block_height: get_block_height,
       in: [(hash, Hash)],
-      out: [(height, u64, u64, height)]
+      out: [(height, u64)]
     },
     { chain_fetch_history: fetch_history,
       chain_get_history: get_history,
@@ -48,92 +45,57 @@ opaque_resource_mapper!{
         (limit, u64),
         (from_height, u64)
       ],
-      out: [
-        ( history, HistoryCompactListP, HistoryCompactList,
-          HistoryCompactList::new(history))
-      ]
+      out: [ ( history, HistoryCompactListP, HistoryCompactList ) ]
     },
     { chain_fetch_block_header_by_height: fetch_block_header_by_height,
       chain_get_block_header_by_height: get_block_header_by_height,
       in: [(height, u64)],
-      out: [
-        (header, HeaderP, Header, Header::new(header)),
-        (new_height, u64, u64, new_height)
-      ]
+      out: [ (header, HeaderP, Header ), (new_height, u64) ]
     },
     { chain_fetch_block_header_by_hash: fetch_block_header_by_hash,
       chain_get_block_header_by_hash: get_block_header_by_hash,
       in: [(hash, Hash)],
-      out: [
-        (header, HeaderP, Header, Header::new(header)),
-        (height, u64, u64, height)
-      ]
+      out: [ (header, HeaderP, Header), (height, u64) ]
     },
     { chain_fetch_block_by_hash: fetch_block_by_hash,
       chain_get_block_by_hash: get_block_by_hash,
       in: [(hash, Hash)],
-      out: [
-        (block, BlockP, Block, Block::new(block)),
-        (height, u64, u64, height)
-      ]
+      out: [ (block, BlockP, Block), (height, u64) ]
     },
     { chain_fetch_merkle_block_by_height: fetch_merkle_block_by_height,
       chain_get_merkle_block_by_height: get_merkle_block_by_height,
       in: [(height, u64)],
-      out: [
-        (block, MerkleBlockP, MerkleBlock, MerkleBlock::new(block)),
-        (new_height, u64, u64, new_height)
-      ]
+      out: [ (block, MerkleBlockP, MerkleBlock), (new_height, u64) ]
     },
     { chain_fetch_merkle_block_by_hash: fetch_merkle_block_by_hash,
       chain_get_merkle_block_by_hash: get_merkle_block_by_hash,
       in: [(hash, Hash)],
-      out: [
-        (block, MerkleBlockP, MerkleBlock, MerkleBlock::new(block)),
-        (height, u64, u64, height)
-      ]
+      out: [ (block, MerkleBlockP, MerkleBlock), (height, u64) ]
     },
     { chain_fetch_compact_block_by_height: fetch_compact_block_by_height,
       chain_get_compact_block_by_height: get_compact_block_by_height,
       in: [(height, u64)],
-      out: [
-        (block, CompactBlockP, CompactBlock, CompactBlock::new(block)),
-        (new_height, u64, u64, new_height)
-      ]
+      out: [ (block, CompactBlockP, CompactBlock), (new_height, u64) ]
     },
     { chain_fetch_compact_block_by_hash: fetch_compact_block_by_hash,
       chain_get_compact_block_by_hash: get_compact_block_by_hash,
       in: [(hash, Hash)],
-      out: [
-        (block, CompactBlockP, CompactBlock, CompactBlock::new(block)),
-        (height, u64, u64, height)
-      ]
+      out: [ (block, CompactBlockP, CompactBlock), (height, u64) ]
     },
     { chain_fetch_transaction: fetch_transaction,
       chain_get_transaction: get_transaction,
       in: [(hash, Hash), (require_confirmed, c_int)],
-      out: [
-        (transaction, TransactionP, Transaction, Transaction::new(transaction)),
-        (height, u64, u64, height)
-      ]
+      out: [ (transaction, TransactionP, Transaction), (height, u64) ]
     },
     { chain_fetch_transaction_position: fetch_transaction_position,
       chain_get_transaction_position: get_transaction_position,
       in: [(hash, Hash), (require_confirmed, c_int)],
-      out: [
-        (position, u64, u64, position),
-        (height, u64, u64, height)
-      ]
+      out: [ (position, u64), (height, u64) ]
     },
     { chain_fetch_stealth: fetch_stealth,
       chain_get_stealth: get_stealth,
       in: [(filter, BinaryP), (from_height, u64)],
-      out: [
-        ( out_list,
-          StealthCompactListP,
-          StealthCompactList,
-          StealthCompactList::new(out_list))
-      ]
+      out: [ (out_list, StealthCompactListP, StealthCompactList) ]
     },
     { chain_organize_block: organize_block,
       chain_organize_block_sync: organize_block_sync,
@@ -186,13 +148,13 @@ extern_async!{
   ChainP,
   chain_validate_tx,
   [(tx, TransactionP)],
-  [(something, *const c_char, *const c_char, something)]
+  [(something, *const c_char)]
 }
 
 extern_async!{
   ChainP,
   chain_fetch_spend,
   [(output_point, OutputPointP)],
-  [(input_point, InputPointP, InputPoint, InputPoint::new(input_point))]
+  [(input_point, InputPointP)]
 }
 

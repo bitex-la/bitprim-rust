@@ -43,47 +43,6 @@ macro_rules! impl_async_and_sync {
   }
 }
 
-macro_rules! expand_out {
-  (($out:ident, $out_inner:ty, $out_outer:expr)) => {
-    ($out, $out_inner, $out_outer, $out_outer::new($out))
-  };
-  (($out:ident, $type:ty)) => {
-    ($out, $type, $out, $type)
-  };
-  ($all:tt) => { $all }
-}
-
-macro_rules! out_name {
-  (($name:ident, $inner:ty, $outer:ty, $value:expr)) => { $name }
-}
-macro_rules! out_inner_type {
-  (($out:ident, $inner:ty, $outer:ty, $value:expr)) => { $inner }
-}
-macro_rules! out_outer_type {
-  (($out:ident, $inner:ty, $outer:ty, $value:expr)) => { $outer }
-}
-macro_rules! out_value {
-  (($out:ident, $inner:ty, $outer:ty, $value:expr)) => { $value }
-}
-
-macro_rules! out_uninitialized {
-  (($name:ident, $inner:ty, $outer:ty, $value:expr)) => {
-    let mut $name = unsafe{ mem::uninitialized() };
-  }
-}
-
-macro_rules! out_name_as_mut_ref {
-  (($name:ident, $inner:ty, $outer:ty, $value:expr)) => {
-    &mut $name
-  }
-}
-
-macro_rules! out_name_as_mut_ptr {
-  (($name:ident, $inner:ty, $outer:ty, $value:expr)) => {
-    *mut $name
-  }
-}
-
 macro_rules! impl_sync {
   ($ptr:ty, $extern_sync:ident, $sync:ident,
    [$(($in:ident, $in_type:ty)),*],
@@ -189,3 +148,35 @@ macro_rules! extern_sync {
     }
   }
 }
+
+macro_rules! out_name {
+  (($name:ident, $inner:ty)) => { $name };
+  (($name:ident, $inner:ty, $outer:expr)) => { $name }
+}
+macro_rules! out_inner_type {
+  (($name:ident, $inner:ty)) => { $inner };
+  (($name:ident, $inner:ty, $outer:expr)) => { $inner }
+}
+macro_rules! out_outer_type {
+  (($name:ident, $inner:ty)) => { $inner };
+  (($name:ident, $inner:ty, $outer:ty)) => { $outer }
+}
+macro_rules! out_value {
+  (($out:ident, $inner:ty)) => { $out };
+  (($out:ident, $inner:ty, $outer:tt)) => { $outer::new($out) }
+}
+
+macro_rules! out_uninitialized {
+  (($name:ident, $inner:ty)) => {
+    let mut $name = unsafe{ mem::uninitialized() };
+  };
+  (($name:ident, $inner:ty, $outer:ty)) => {
+    let mut $name = unsafe{ mem::uninitialized() };
+  }
+}
+
+macro_rules! out_name_as_mut_ref {
+  (($name:ident, $inner:ty)) => { &mut $name };
+  (($name:ident, $inner:ty, $outer:ty)) => { &mut $name };
+}
+
