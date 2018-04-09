@@ -11,52 +11,65 @@ impl Explorer {
     /* Just incoming, and enough information to serialize them */
   }
 
-  pub fn utxos_for(address: String) -> Vec<Utxo> {
+  pub fn utxos_for(address: String) -> Vec<Output> {
     /* Just incoming, and enough information to serialize them */
   }
 }
 
-struct TransactionHash {
-  hash: String
+type Address = String;
+
+struct Block {
+  height: i32
 }
 
-struct TransactionHash {
-  transaction_hash: TransactionHash,
-  inputs: Vec<Input>,
-  outputs: Vec<Output>
+struct Transaction {
+  txid: String,
+  position: i32,
+  block: Block
+  /* Inputs and outputs are optional just to break recursion */
+  inputs: Option<Vec<Input>>,
+  outputs: Option<Vec<Output>>,
+}
+
+impl Transaction {
+  pub fn with_inputs(self: Self) -> Self {
+    self
+  }
 }
 
 struct Input {
-  address: PaymentAddress,
-  satoshis: i64
-  position: i32,
-  transaction_hash: TransactionHash,
-  height: i64
-}
-
-struct Output {
-  address: PaymentAddress,
+  address: Address,
   satoshis: i64,
-  position: i32
-  transaction_hash: TransactionHash,
-  height: i64,
-  spent: bool,
-}
-
-struct Utxo {
-  output: Output,
+  position: i32,
+  prev_out: Output,
+  script: String,
   transaction: Transaction
 }
 
+struct Output {
+  address: Address,
+  satoshis: i64,
+  position: i32,
+  script_type: ScriptType,
+  script: String,
+  spent: bool,
+  transaction: Transaction
+}
+
+struct ScryptType {
+  PayToAddress,
+  PayToScriptHash
+}
+
 enum AddressHistoryItem {
-  Input(Input)
+  Input(Input),
   Output(Output)
 }
 
 struct AddressHistory {
-  address: PaymentAddress,
+  address: Address,
   received: u64,
   sent: u64,
   balance: u64,
-  history: Vec<AddressHistoryItem>
+  history: AddressHistoryItem
 }

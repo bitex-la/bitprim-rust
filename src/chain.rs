@@ -119,8 +119,6 @@ opaque_resource_mapper!{
     pub fn is_stale(&self) -> bool {
       (unsafe{ chain_is_stale(self.raw) }) != 0
     }
-
-    pub fn explore_address_history(a, b, c)
   }
 
   extern {
