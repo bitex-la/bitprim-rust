@@ -6,6 +6,10 @@ use std::thread::sleep;
 use std::time::Duration;
 use bitprim::{Executor, ExitCode};
 use bitprim::errors::*;
+use bitprim::transaction::Transaction;
+use bitprim::payment_address::PaymentAddress;
+use std::sync::{Arc,Mutex};
+use std::sync::atomic::{AtomicBool, Ordering};
 
 macro_rules! assert_ok {
   ($name:ident $body:block) => (
@@ -27,10 +31,10 @@ fn build_test_executor() -> Result<Executor> {
   Ok(exec)
 }
 
-fn build_400_blocks_executor() -> Result<Executor> {
+fn build_500_blocks_executor() -> Result<Executor> {
   let exec = build_test_executor()?;
   exec.run_wait()?;
-  while exec.get_chain().get_last_height()? < 400 {
+  while exec.get_chain().get_last_height()? < 500 {
     println!("Syncing {:?}", exec.get_chain().get_last_height()?);
     sleep(Duration::new(1,0));
   }
@@ -42,21 +46,21 @@ fn it_has_a_version(){
     assert_eq!(&Executor::version(), "\"v0.7.0\"");
 }
 
-assert_ok!{ runs_400_blocks_sync {
-    let exec = build_400_blocks_executor()?;
+assert_ok!{ runs_500_blocks_sync {
+    let exec = build_500_blocks_executor()?;
     exec.stop()?;
     while !exec.is_stopped() {
       sleep(Duration::new(1,0));
     }
 }}
 
-assert_ok!{ runs_400_blocks_async {
+assert_ok!{ runs_500_blocks_async {
     let exec = build_test_executor()?;
     exec.run(|exec, exit_code| {
       if exit_code != ExitCode::Success {
         assert!(false, format!("Async runner failed with {:?}", exit_code));
       }else{
-        while exec.get_chain().get_last_height().expect("height fail") < 400 {
+        while exec.get_chain().get_last_height().expect("height fail") < 500 {
           sleep(Duration::new(1,0));
         }
       }
@@ -64,38 +68,61 @@ assert_ok!{ runs_400_blocks_async {
 }}
 
 assert_ok!{ gets_last_height_async {
-    let exec = build_400_blocks_executor()?;
+    let exec = build_500_blocks_executor()?;
     exec.run(|exec, _|{
       exec.get_chain().fetch_last_height(|_chain, exit, height|{
         println!("Async fetch last height: {}, {:?}", height, exit);
-        assert!(height >= 400, "Height was not over 1000");
+        assert!(height >= 500, "Height was not over 1000");
       })
     })
 }}
 
 assert_ok!{ gets_earliest_transaction_block {
-  let exec = build_400_blocks_executor()?;
+  let exec = build_500_blocks_executor()?;
   let chain = exec.get_chain();
-  let (block, _) = chain.get_block_by_height(381)?;
+  let (block, _) = chain.get_block_by_height(429)?;
   let height = chain.get_block_height(block.hash())?;
-  assert!(height == 381);
+  assert!(height == 429);
   assert!(block.hash().to_hex() ==
-    "000000001a4c2c64beded987790ab0c00675b4bc467cd3574ad455b1397c967c");
-  assert!(block.transaction_count() == 2);
+    "00000000e080223655db52d2c35a37f6aa17a3f2efefa6794fd9831374cff09f");
+  assert!(block.transaction_count() == 49);
 }}
 
 assert_ok!{ fetches_earliest_transaction_block {
-  let exec = build_400_blocks_executor()?;
+  let exec = build_500_blocks_executor()?;
   let chain = exec.get_chain();
-  chain.fetch_block_by_height(381, |new_chain, _, block, _height|{
+  chain.fetch_block_by_height(429, |new_chain, _, block, _height|{
     assert!(block.hash().to_hex() ==
-      "000000001a4c2c64beded987790ab0c00675b4bc467cd3574ad455b1397c967c");
-    assert!(block.transaction_count() == 2);
+      "00000000e080223655db52d2c35a37f6aa17a3f2efefa6794fd9831374cff09f");
+    assert!(block.transaction_count() == 49);
     new_chain.fetch_block_height(block.hash(), |_, _, height:u64|{
-      assert!(height == 381);
+      assert!(height == 429);
     });
   })
 }}
+
+assert_ok!{ gets_unspents_for_an_address {
+  let exec = build_500_blocks_executor()?;
+  let chain = exec.get_chain();
+  let addr = PaymentAddress::from_str("mqETuaBY9Tiq1asdsehEyQgCHe34SrXQs9");
+  let hist = chain.get_history(addr, 1000, 1)?;
+  assert!(hist.count() == 2);
+  let first = hist.nth(0);
+  println!("Point kind {:?}", first.get_point_kind());
+  println!("Value {:?}", first.get_value_or_previous_checksum());
+}}
+
+assert_ok!{ gets_incoming_for_an_address {
+}}
+
+/*
+assert_ok!{ finds_transaction_by_hex {
+  let exec = build_500_blocks_executor()?;
+  let tx = Transaction::from_hex(
+    "74c2146fe18fb7c652dc10a5b126d0754df44ad8c1d24ed399ef561001e05c43");
+
+}}
+*/
 
 /*
 assert_ok!{ finds_earliest_transaction_by_subscribing {

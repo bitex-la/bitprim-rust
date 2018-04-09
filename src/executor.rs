@@ -1,8 +1,8 @@
 use std::os::raw::{c_char, c_int, c_void};
 use std::os::unix::io::AsRawFd;
 use std::ffi::{CString, CStr};
-use std::sync::atomic::{AtomicUsize, Ordering};
-use std::sync::Arc;
+use std::sync::{Arc,Mutex};
+use std::sync::atomic::{AtomicUsize, AtomicBool, Ordering};
 use std::{thread, time};
 use exit_code::ExitCode;
 use chain::{Chain, ChainP};
@@ -13,7 +13,7 @@ pub enum ExecutorT {}
 pub type ExecutorP = *mut ExecutorT;
 
 pub struct Executor{
-	raw: ExecutorP,
+	pub raw: ExecutorP,
 	// Libbitcoin requires the main executor to be destroyed from the thread
 	// that originally created it.
 	// Also, we may have more than one executor, in separate threads, when
@@ -21,13 +21,17 @@ pub struct Executor{
 	// To address both issues we only destroy the original executor, and
 	// keep count of any clones to wait until they're dropped before destruction.
 	clones: Arc<AtomicUsize>,
-	original: bool
+	original: bool,
 }
 
 impl Clone for Executor {
   fn clone(&self) -> Executor {
     self.clones.fetch_add(1, Ordering::SeqCst);
-    Executor{ raw: self.raw, clones: self.clones.clone(), original: false }
+    Executor{
+      raw: self.raw,
+      original: false,
+      clones: self.clones.clone(),
+    }
   }
 }
 
@@ -44,7 +48,7 @@ impl Drop for Executor {
     }
 }
 
-extern_async_and_sync!{ ExecutorP {
+extern_async_and_sync!{ ExecutorP, Executor {
   executor_run: run,
   executor_run_wait: run_wait,
   in: [],
@@ -74,7 +78,11 @@ impl Executor {
 		let raw = unsafe{
       executor_construct_fd(path.as_ptr(), out.as_raw_fd(), err.as_raw_fd())
 		};
-    Executor{ raw, original: true, clones: Arc::new(AtomicUsize::new(0)) }
+    Executor{
+      raw,
+      original: true,
+      clones: Arc::new(AtomicUsize::new(0)),
+    }
   }
 
   pub fn initchain(&self) -> Result<ExitCode> {

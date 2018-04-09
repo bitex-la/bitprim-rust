@@ -1,9 +1,18 @@
 use std::os::raw::{c_char, c_int};
+use std::ffi::CString;
 
 opaque_resource_mapper!{
   PaymentAddressT, PaymentAddressP, PaymentAddress {}
   async_and_sync {}
-  impl {}
+  impl {
+    pub fn from_str(hex: &str) -> PaymentAddress {
+      let c_hex = CString::new(hex).expect("Invalid hex");
+      PaymentAddress::new(
+        unsafe { chain_payment_address_construct_from_string(c_hex.as_ptr()) }
+      )
+    }
+  }
+
   extern { 
     pub fn chain_payment_address_encoded(
         payment_address: PaymentAddressP,
@@ -16,5 +25,11 @@ opaque_resource_mapper!{
         payment_address: PaymentAddressP,
     ) -> c_int;
     pub fn chain_payment_address_destruct(payment_address: PaymentAddressP);
+  }
+}
+
+impl Drop for PaymentAddress {
+  fn drop(&mut self){
+    unsafe{ chain_payment_address_destruct(self.raw) }
   }
 }

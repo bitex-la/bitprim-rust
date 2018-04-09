@@ -1,9 +1,19 @@
-use history_compact::HistoryCompactP;
+use history_compact::{HistoryCompactP, HistoryCompact};
 
 opaque_resource_mapper!{
   HistoryCompactListT, HistoryCompactListP, HistoryCompactList {}
   async_and_sync {}
-  impl {}
+
+  impl {
+    pub fn count(&self) -> u64 {
+      unsafe{ chain_history_compact_list_count(self.raw) }
+    }
+
+    pub fn nth(&self, n: u64) -> HistoryCompact {
+      HistoryCompact::new(unsafe{ chain_history_compact_list_nth(self.raw, n) })
+    }
+  }
+
   extern { 
     pub fn chain_history_compact_list_destruct(list: HistoryCompactListP);
     pub fn chain_history_compact_list_count(list: HistoryCompactListP) -> u64;
@@ -11,5 +21,11 @@ opaque_resource_mapper!{
         list: HistoryCompactListP,
         n: u64,
     ) -> HistoryCompactP;
+  }
+}
+
+impl Drop for HistoryCompactList {
+  fn drop(&mut self){
+    unsafe{ chain_history_compact_list_destruct(self.raw) }
   }
 }

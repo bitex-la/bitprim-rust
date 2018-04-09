@@ -1,7 +1,12 @@
 use std::mem;
+use std;
 use std::os::raw::{c_int, c_void, c_char};
+use std::ffi::CString;
 use exit_code::ExitCode;
+use std::sync::{Arc,Mutex};
+use std::sync::atomic::{AtomicBool, Ordering};
 use errors::*;
+use std::{thread, time};
 use hash::Hash;
 use header::*;
 use block::*;
@@ -18,6 +23,7 @@ use output_point::*;
 use input_point::*;
 
 opaque_resource_mapper!{
+  #[derive(Clone)]
   ChainT, ChainP, Chain {
     exec: Executor
   }
@@ -41,7 +47,7 @@ opaque_resource_mapper!{
     { chain_fetch_history: fetch_history,
       chain_get_history: get_history,
       in: [
-        (address, PaymentAddressP),
+        (address, PaymentAddressP, PaymentAddress),
         (limit, u64),
         (from_height, u64)
       ],
@@ -109,41 +115,20 @@ opaque_resource_mapper!{
     }
   }
 
-  impl { }
+  impl {
+    pub fn is_stale(&self) -> bool {
+      (unsafe{ chain_is_stale(self.raw) }) != 0
+    }
+
+    pub fn explore_address_history(a, b, c)
+  }
 
   extern {
-    pub fn hex_to_tx(tx_hex: *const c_char) -> TransactionP;
     pub fn chain_is_stale(chain: ChainP) -> c_int;
-    pub fn chain_unsubscribe(chain: ChainP);
-    pub fn chain_subscribe_blockchain(
-        exec: ExecutorP,
-        chain: ChainP,
-        context: *mut c_void,
-        handler: Option< unsafe extern fn(
-          exec: ExecutorP,
-          chain: ChainP,
-          context: *mut c_void,
-          exit_code: ExitCode,
-          height: u64,
-          blocks_a: BlockListP,
-          blocks_b: BlockListP)
-          -> c_int >
-    );
-    pub fn chain_subscribe_transaction(
-        exec: ExecutorP,
-        chain: ChainP,
-        context: *mut c_void,
-        handler: Option< unsafe extern fn(
-          ExecutorP,
-          ChainP,
-          *mut c_void,
-          ExitCode,
-          TransactionP
-          ) -> c_int >
-    );
   }
 }
 
+/*
 extern_async!{
   ChainP,
   chain_validate_tx,
@@ -157,4 +142,4 @@ extern_async!{
   [(output_point, OutputPointP)],
   [(input_point, InputPointP)]
 }
-
+*/
