@@ -1,12 +1,7 @@
 use std::mem;
-use std;
-use std::os::raw::{c_int, c_void, c_char};
-use std::ffi::CString;
+use std::os::raw::{c_int, c_void};
 use exit_code::ExitCode;
-use std::sync::{Arc,Mutex};
-use std::sync::atomic::{AtomicBool, Ordering};
 use errors::*;
-use std::{thread, time};
 use hash::Hash;
 use header::*;
 use block::*;
@@ -18,9 +13,6 @@ use binary::*;
 use transaction::*;
 use executor::*;
 use stealth_compact_list::*;
-use block_list::*;
-use output_point::*;
-use input_point::*;
 
 opaque_resource_mapper!{
   #[derive(Clone)]

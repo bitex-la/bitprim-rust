@@ -1,5 +1,4 @@
 use std::os::raw::{c_int, c_char};
-use std::ffi::CString;
 use hash::Hash;
 use input_list::InputListP;
 use output_list::OutputListP;
@@ -8,12 +7,7 @@ use script::ScriptP;
 opaque_resource_mapper!{
   TransactionT, TransactionP, Transaction {}
   async_and_sync {}
-  impl {
-    /*pub fn from_hex(hex: &str) -> Transaction {
-      let c_hex = CString::new(hex).expect("Invalid hex_to_tx");
-      Transaction::new(unsafe { hex_to_tx(c_hex.as_ptr()) })
-    }*/
-  }
+  impl {}
   extern { 
     pub fn hex_to_tx(tx_hex: *const c_char) -> TransactionP;
     pub fn chain_transaction_construct_default() -> TransactionP;

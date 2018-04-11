@@ -78,7 +78,7 @@ macro_rules! impl_async_and_sync {
       $extern_async: $async,
       self: {
         outer: (this, $struct),
-        inner: (this_raw, $ptr, this.clone())
+        inner: (_this_raw, $ptr, this.clone())
       },
       in: $in,
       out: $out

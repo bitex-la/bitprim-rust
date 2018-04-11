@@ -1,8 +1,8 @@
 use std::os::raw::{c_char, c_int, c_void};
 use std::os::unix::io::AsRawFd;
 use std::ffi::{CString, CStr};
-use std::sync::{Arc,Mutex};
-use std::sync::atomic::{AtomicUsize, AtomicBool, Ordering};
+use std::sync::Arc;
+use std::sync::atomic::{AtomicUsize, Ordering};
 use std::{thread, time};
 use exit_code::ExitCode;
 use chain::{Chain, ChainP};
@@ -10,6 +10,7 @@ use p2p::{P2p, P2pP};
 use errors::*;
 
 pub enum ExecutorT {}
+unsafe impl Send for ExecutorT {}
 pub type ExecutorP = *mut ExecutorT;
 
 pub struct Executor{
@@ -23,6 +24,9 @@ pub struct Executor{
 	clones: Arc<AtomicUsize>,
 	original: bool,
 }
+
+unsafe impl Send for Executor {}
+unsafe impl Sync for Executor {}
 
 impl Clone for Executor {
   fn clone(&self) -> Executor {
@@ -41,7 +45,9 @@ impl Drop for Executor {
 					while self.clones.load(Ordering::SeqCst) > 0 {
 					  thread::sleep(time::Duration::from_millis(100));
 					}
-					unsafe{ executor_destruct(self.raw) }
+					unsafe{
+            executor_destruct(self.raw);
+          }
 				}else{
 					self.clones.fetch_sub(1, Ordering::SeqCst);
 				}
@@ -112,7 +118,7 @@ impl Executor {
 	pub fn run_wait(&self) -> Result<ExitCode> {
 		let result = unsafe{ executor_run_wait(self.raw) };
 		match result {
-			ExitCode::Success => Ok(result),
+			ExitCode::Success | ExitCode::ServiceStopped => Ok(result),
 			_ => bail!(ErrorKind::ErrorExitCode(result))
 		}
 	}

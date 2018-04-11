@@ -112,20 +112,11 @@ assert_ok!{ gets_unspents_for_an_address {
   println!("Value {:?}", first.get_value_or_previous_checksum());
 }}
 
-assert_ok!{ gets_incoming_for_an_address {
-}}
-
 /*
-assert_ok!{ finds_transaction_by_hex {
-  let exec = build_500_blocks_executor()?;
-  let tx = Transaction::from_hex(
-    "74c2146fe18fb7c652dc10a5b126d0754df44ad8c1d24ed399ef561001e05c43");
+assert_ok!{ explores_incoming_funds_to_address {
+}};
 
-}}
-*/
-
-/*
-assert_ok!{ finds_earliest_transaction_by_subscribing {
+assert_ok!{ explores_utxos_for_address {
 }};
 */
 

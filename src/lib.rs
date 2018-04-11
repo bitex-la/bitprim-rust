@@ -37,3 +37,4 @@ pub mod word_list;
 
 pub use executor::Executor;
 pub use exit_code::ExitCode;
+pub use payment_address::PaymentAddress;
