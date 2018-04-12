@@ -3,7 +3,16 @@ use hash::Hash;
 opaque_resource_mapper!{
   OutputPointT, OutputPointP, OutputPoint {}
   async_and_sync {}
-  impl {}
+  impl {
+    pub fn from_hash_index(hash: Hash, index: u32) -> OutputPoint {
+      let raw = unsafe{ output_point_construct_from_hash_index(hash, index) };
+      OutputPoint{raw}
+    }
+
+    pub fn hash(&self) -> Hash {
+      unsafe{ output_point_get_hash(self.raw) }
+    }
+  }
   extern { 
     pub fn output_point_get_hash(op: OutputPointP) -> Hash;
     pub fn output_point_get_hash_out(op: OutputPointP, out_hash: *mut Hash);

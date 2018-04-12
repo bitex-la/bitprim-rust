@@ -1,13 +1,22 @@
 use std::os::raw::{c_int, c_char};
 use hash::Hash;
-use input_list::InputListP;
+use input_list::{InputListP, InputList};
 use output_list::OutputListP;
 use script::ScriptP;
 
 opaque_resource_mapper!{
   TransactionT, TransactionP, Transaction {}
   async_and_sync {}
-  impl {}
+  impl {
+    pub fn hash(&self) -> Hash {
+      unsafe{ chain_transaction_hash(self.raw) }
+    }
+
+    pub fn inputs(&self) -> InputList {
+      let raw = unsafe{ chain_transaction_inputs(self.raw) };
+      InputList{raw}
+    }
+  }
   extern { 
     pub fn hex_to_tx(tx_hex: *const c_char) -> TransactionP;
     pub fn chain_transaction_construct_default() -> TransactionP;
@@ -81,3 +90,13 @@ opaque_resource_mapper!{
     ) -> *const u8;
   }
 }
+
+/*
+impl Drop for Transaction {
+  fn drop(&mut self){
+    println!("Destruct transaction {:?}", self.raw);
+    unsafe{ chain_transaction_destruct(self.raw) }
+    println!("Destructed trensaction {:?}", self.raw);
+  }
+}
+*/

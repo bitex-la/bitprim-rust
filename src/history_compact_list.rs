@@ -12,6 +12,14 @@ opaque_resource_mapper!{
     pub fn nth(&self, n: u64) -> HistoryCompact {
       HistoryCompact::new(unsafe{ chain_history_compact_list_nth(self.raw, n) })
     }
+
+    pub fn items(&self) -> Vec<HistoryCompact> {
+      let mut items = vec![];
+      for i in 0..self.count() {
+        items.push(self.nth(i));
+      }
+      items
+    }
   }
 
   extern { 
@@ -23,9 +31,10 @@ opaque_resource_mapper!{
     ) -> HistoryCompactP;
   }
 }
-
+/*
 impl Drop for HistoryCompactList {
   fn drop(&mut self){
     unsafe{ chain_history_compact_list_destruct(self.raw) }
   }
 }
+*/

@@ -28,8 +28,10 @@ opaque_resource_mapper!{
   }
 }
 
+/*
 impl Drop for PaymentAddress {
   fn drop(&mut self){
     unsafe{ chain_payment_address_destruct(self.raw) }
   }
 }
+*/

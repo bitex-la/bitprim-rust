@@ -1,7 +1,7 @@
 use std::os::raw::{c_char, c_int};
 use header::HeaderP;
 use hash::Hash;
-use transaction::TransactionP;
+use transaction::{TransactionP, Transaction};
 use transaction_list::TransactionListP;
 
 opaque_resource_mapper!{
@@ -9,11 +9,17 @@ opaque_resource_mapper!{
   async_and_sync {}
   
   impl {
-    pub fn transaction_count(&self) -> u64 {
+    pub fn len(&self) -> u64 {
       unsafe{ chain_block_transaction_count(self.raw) }
     }
+
     pub fn hash(&self) -> Hash {
       unsafe{ chain_block_hash(self.raw) }
+    }
+
+    pub fn nth(&self, n: u32) -> Transaction {
+      let raw = unsafe{ chain_block_transaction_nth(self.raw, n) };
+      Transaction{raw}
     }
   }
 
@@ -27,7 +33,7 @@ opaque_resource_mapper!{
     pub fn chain_block_hash_out(block: BlockP, out_hash: *mut Hash);
     pub fn chain_block_proof(block: BlockP) -> *const c_char;
     pub fn chain_block_transaction_count(block: BlockP) -> u64;
-    pub fn chain_block_transaction_nth(block: BlockP, n: u64) -> TransactionP;
+    pub fn chain_block_transaction_nth(block: BlockP, n: u32) -> TransactionP;
     pub fn chain_block_serialized_size(block: BlockP, version: u32) -> u64;
     pub fn chain_block_subsidy(height: u64) -> u64;
     pub fn chain_block_fees(block: BlockP) -> u64;
@@ -65,3 +71,13 @@ opaque_resource_mapper!{
     ) -> *const u8;
   }
 }
+
+/*
+impl Drop for Block {
+  fn drop(&mut self){
+    println!("Destruct block {:?}", self.raw);
+    unsafe{ chain_block_destruct(self.raw) }
+    println!("Destructed block {:?}", self.raw);
+  }
+}
+*/

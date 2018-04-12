@@ -1,5 +1,6 @@
 use std::mem;
 use std::os::raw::{c_int, c_void};
+use std::sync::mpsc::channel;
 use exit_code::ExitCode;
 use errors::*;
 use hash::Hash;
@@ -13,6 +14,9 @@ use binary::*;
 use transaction::*;
 use executor::*;
 use stealth_compact_list::*;
+use input_point::*;
+use output_point::*;
+use history_semantic::HistorySemantic;
 
 opaque_resource_mapper!{
   #[derive(Clone)]
@@ -107,9 +111,40 @@ opaque_resource_mapper!{
     }
   }
 
+  async {
+    { chain_fetch_spend: fetch_spend,
+      self: {
+        outer: (this, Chain),
+        inner: (this_raw, ChainP, Chain{raw: this_raw, ..this})
+      },
+      in: [(output_point, OutputPointP, OutputPoint)],
+      out: [(input_point, InputPointP, InputPoint)]
+    }
+  }
+
   impl {
     pub fn is_stale(&self) -> bool {
       (unsafe{ chain_is_stale(self.raw) }) != 0
+    }
+
+    pub fn get_history_semantic(&self, address: PaymentAddress, limit: u64,
+      from_height: u64) -> Result<Vec<HistorySemantic>>
+    {
+      let history = self.get_history(address, limit, from_height)?;
+      println!("History count was {:?}", history.count());
+
+      Ok((0..history.count()).map(|i|{
+        history.nth(i).as_semantic(&self)
+      }).collect())
+    }
+
+    pub fn is_spent(&self, output_point: OutputPoint) -> bool {
+      let (writex, readex) = channel();
+      self.fetch_spend(output_point, |_, error, _|{
+        writex.send(error != ExitCode::NotFound)
+          .expect("Could not write to is_spent channel");
+      });
+      readex.recv().expect("Could not read from is_spent channel")
     }
   }
 
@@ -126,10 +161,4 @@ extern_async!{
   [(something, *const c_char)]
 }
 
-extern_async!{
-  ChainP,
-  chain_fetch_spend,
-  [(output_point, OutputPointP)],
-  [(input_point, InputPointP)]
-}
 */

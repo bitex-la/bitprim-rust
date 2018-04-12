@@ -1,11 +1,21 @@
 use std::os::raw::c_int;
-use output_point::OutputPointP;
+use output_point::{OutputPointP, OutputPoint};
 use script::ScriptP;
 
 opaque_resource_mapper!{
   InputT, InputP, Input {}
   async_and_sync {}
-  impl {}
+  impl {
+    pub fn is_valid(&self) -> bool {
+      (unsafe{ chain_input_is_valid(self.raw) }) == 1
+    }
+
+    pub fn previous_output(&self) -> OutputPoint {
+      let raw = unsafe{ chain_input_previous_output(self.raw)};
+      OutputPoint{raw}
+    }
+  }
+
   extern { 
     pub fn chain_input_construct_default() -> InputP;
     pub fn chain_input_construct(
@@ -26,3 +36,13 @@ opaque_resource_mapper!{
     pub fn chain_input_previous_output(input: InputP) -> OutputPointP;
   }
 }
+
+/*
+impl Drop for Input {
+  fn drop(&mut self){
+    println!("Destruct input {:?}", self.raw);
+    //unsafe{ chain_input_destruct(self.raw) }
+    println!("Destructed input {:?}", self.raw);
+  }
+}
+*/

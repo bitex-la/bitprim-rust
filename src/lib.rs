@@ -34,6 +34,7 @@ pub mod point_list;
 pub mod wallet_hd;
 pub mod wallet_ec;
 pub mod word_list;
+pub mod history_semantic;
 
 pub use executor::Executor;
 pub use exit_code::ExitCode;
