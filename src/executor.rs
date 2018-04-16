@@ -8,6 +8,8 @@ use exit_code::ExitCode;
 use chain::{Chain, ChainP};
 use p2p::{P2p, P2pP};
 use errors::*;
+use explorer::Explorer;
+use std::thread::{current, ThreadId};
 
 pub enum ExecutorT {}
 unsafe impl Send for ExecutorT {}
@@ -21,8 +23,9 @@ pub struct Executor{
 	// running async.
 	// To address both issues we only destroy the original executor, and
 	// keep count of any clones to wait until they're dropped before destruction.
-	clones: Arc<AtomicUsize>,
-	original: bool,
+	in_original_thread: Arc<AtomicUsize>,
+	in_new_thread: Arc<AtomicUsize>,
+	original_thread_id: ThreadId,
 }
 
 unsafe impl Send for Executor {}
@@ -30,31 +33,39 @@ unsafe impl Sync for Executor {}
 
 impl Clone for Executor {
   fn clone(&self) -> Executor {
-    self.clones.fetch_add(1, Ordering::SeqCst);
+    if self.original_thread_id == current().id() {
+      self.in_original_thread.fetch_add(1, Ordering::SeqCst);
+    }else {
+      self.in_new_thread.fetch_add(1, Ordering::SeqCst);
+    }
+
     Executor{
       raw: self.raw,
-      original: false,
-      clones: self.clones.clone(),
+      original_thread_id: self.original_thread_id,
+      in_original_thread: self.in_original_thread.clone(),
+      in_new_thread: self.in_new_thread.clone()
     }
   }
 }
 
 impl Drop for Executor {
     fn drop(&mut self) {
-				if self.original {
-					while self.clones.load(Ordering::SeqCst) > 0 {
-					  thread::sleep(time::Duration::from_millis(100));
-					}
-					unsafe{
-            executor_destruct(self.raw);
+      if self.original_thread_id == current().id() {
+        if self.in_original_thread.load(Ordering::SeqCst) == 1 {
+          while self.in_new_thread.load(Ordering::SeqCst) > 0 {
+            thread::sleep(time::Duration::from_millis(100));
           }
-				}else{
-					self.clones.fetch_sub(1, Ordering::SeqCst);
-				}
+          unsafe{ executor_destruct(self.raw) }
+        } else {
+          self.in_original_thread.fetch_sub(1, Ordering::SeqCst);
+        }
+      }else{
+        self.in_new_thread.fetch_sub(1, Ordering::SeqCst);
+      }
     }
 }
 
-extern_async_and_sync!{ ExecutorP, Executor {
+extern_async_and_sync_methods!{ Executor, ExecutorP, {
   executor_run: run,
   executor_run_wait: run_wait,
   in: [],
@@ -86,8 +97,17 @@ impl Executor {
 		};
     Executor{
       raw,
-      original: true,
-      clones: Arc::new(AtomicUsize::new(0)),
+      original_thread_id: current().id(),
+      in_original_thread: Arc::new(AtomicUsize::new(1)),
+      in_new_thread: Arc::new(AtomicUsize::new(0)),
+    }
+  }
+
+  pub fn version() -> String {
+    unsafe {
+      let s = executor_version();
+      if s.is_null() { panic!("executor_version was null"); }
+      CStr::from_ptr(s).to_string_lossy().into_owned()
     }
   }
 
@@ -144,59 +164,7 @@ impl Executor {
 		P2p::new( unsafe { executor_get_p2p(self.raw) } )
 	}
 
-  pub fn version() -> String {
-    unsafe {
-      let s = executor_version();
-      if s.is_null() { panic!("executor_version was null"); }
-      CStr::from_ptr(s).to_string_lossy().into_owned()
-    }
+  pub fn explorer(&self) -> Explorer {
+    Explorer{ executor: self.clone() }
   }
 }
-/*
-FILE structs are not supported yet, so executor_construct is not implemented
-
-extern "C" {
-    pub fn executor_construct(
-        path: *const c_char,
-        sout: *mut FILE,
-        serr: *mut FILE,
-    ) -> *mut Executor;
-}
-
-Rust Bindgen suggests a FILE is a IO_FILE struct, as follows.
-
-#[derive(Debug, Copy, Clone)]
-#[repr(C, packed)]
-pub struct _IO_FILE {
-    pub _flags: c_int,
-    pub _IO_read_ptr: *mut c_char,
-    pub _IO_read_end: *mut c_char,
-    pub _IO_read_base: *mut c_char,
-    pub _IO_write_base: *mut c_char,
-    pub _IO_write_ptr: *mut c_char,
-    pub _IO_write_end: *mut c_char,
-    pub _IO_buf_base: *mut c_char,
-    pub _IO_buf_end: *mut c_char,
-    pub _IO_save_base: *mut c_char,
-    pub _IO_backup_base: *mut c_char,
-    pub _IO_save_end: *mut c_char,
-    pub _markers: *mut _IO_marker,
-    pub _chain: *mut _IO_FILE,
-    pub _fileno: c_int,
-    pub _flags2: c_int,
-    pub _old_offset: __off_t,
-    pub _cur_column: c_ushort,
-    pub _vtable_offset: c_schar,
-    pub _shortbuf: [c_char; 1usize],
-    pub _lock: *mut _IO_lock_t,
-    pub _offset: __off64_t,
-    pub __pad1: *mut c_void,
-    pub __pad2: *mut c_void,
-    pub __pad3: *mut c_void,
-    pub __pad4: *mut c_void,
-    pub __pad5: usize,
-    pub _mode: c_int,
-    pub _unused2: [c_char; 20usize],
-}
-
-*/

@@ -1,12 +1,15 @@
-use stealth_compact::StealthCompactP;
+use stealth_compact::{StealthCompact, StealthCompactP};
 
-opaque_resource_mapper!{
-  StealthCompactListT, StealthCompactListP, StealthCompactList {}
-  async_and_sync {}
-  impl {}
-  extern { 
-    pub fn stealth_compact_list_destruct(list: StealthCompactListP);
-    pub fn stealth_compact_list_count(list: StealthCompactListP) -> u64;
-    pub fn stealth_compact_list_nth(list: StealthCompactListP, n: u64) -> StealthCompactP;
+opaque_droppable_resource!{
+  StealthCompactListT, StealthCompactListP, StealthCompactList {
+    iter: u32, default: 0;
   }
+  drop: stealth_compact_list_destruct
+}
+
+opaque_collection! {
+  StealthCompactList, StealthCompactListP,
+  StealthCompact, StealthCompactP,
+  stealth_compact_list_count,
+  stealth_compact_list_nth
 }

@@ -1,6 +1,3 @@
-opaque_resource_mapper!{
+opaque_resource!{
   InputPointT, InputPointP, InputPoint {}
-  async_and_sync {}
-  impl {}
-  extern {}
 }

@@ -1,3 +1,4 @@
+#[macro_use] extern crate pretty_assertions;
 extern crate error_chain;
 extern crate bitprim;
 
@@ -6,11 +7,8 @@ use std::thread::sleep;
 use std::time::Duration;
 use bitprim::{Executor, ExitCode};
 use bitprim::errors::*;
-use bitprim::transaction::Transaction;
 use bitprim::payment_address::PaymentAddress;
-use bitprim::history_semantic::HistorySemantic;
-use std::sync::{Arc,Mutex};
-use std::sync::atomic::{AtomicBool, Ordering};
+use bitprim::explorer::*;
 
 macro_rules! assert_ok {
   ($name:ident $body:block) => (
@@ -28,12 +26,14 @@ macro_rules! assert_ok {
 fn build_test_executor() -> Result<Executor> {
   let f = File::create("/dev/null").unwrap();
   let exec = Executor::new("./tests/btc-testnet.cfg", &f, &f);
+  println!("Init chain");
   exec.initchain()?;
   Ok(exec)
 }
 
 fn build_500_blocks_executor() -> Result<Executor> {
   let exec = build_test_executor()?;
+  println!("About to run");
   exec.run_wait()?;
   while exec.get_chain().get_last_height()? < 500 {
     println!("Syncing {:?}", exec.get_chain().get_last_height()?);
@@ -44,7 +44,7 @@ fn build_500_blocks_executor() -> Result<Executor> {
 
 #[test]
 fn it_has_a_version(){
-    assert_eq!(&Executor::version(), "\"v0.7.0\"");
+    assert_eq!(&Executor::version(), "\"v0.9.0\"");
 }
 
 assert_ok!{ runs_500_blocks_sync {
@@ -102,12 +102,39 @@ assert_ok!{ fetches_earliest_transaction_block {
   })
 }}
 
-assert_ok!{ gets_unspents_for_an_address {
+assert_ok!{ explores_an_address {
+  println!("Building executor");
+  let explorer = build_500_blocks_executor()?.explorer();
+  println!("Explorer is here");
+  let addr = PaymentAddress::from_str("mhjp3ZgbGxx5qc9Y8dvk1F71QeQcE9swLE");
+  println!("about to get history");
+  let hist = explorer.address_history(addr, 100000, 1)?;
+  println!("history is here");
+  //assert!(hist.len() == 19);
+  assert_eq!(hist.len(), 16);
+
+  assert_eq!(hist[11], AddressHistory::Received(Received{
+    satoshis: 450648,
+    transaction_hash: 
+      "58baf615ed9e95023acb05715d3885cc48700ab548072cb5a996056786931fe3".to_string(),
+    position: 1,
+    is_spent: false
+  }));
+
+  assert_eq!(hist[10], AddressHistory::Received(Received{
+    satoshis: 963007,
+    transaction_hash: 
+      "8ff1a6d53806b2c6e0f9c82d8f1a32cee604e84ee400fc2c7f2a8d7b95ba328c".to_string(),
+    position: 1,
+    is_spent: true
+  }));
+  println!("So far so good");
+}}
+
+/*
+assert_ok!{ navigates_by_block_without_segfaults {
   let exec = build_500_blocks_executor()?;
   let chain = exec.get_chain();
-  let addr = PaymentAddress::from_str("mhjp3ZgbGxx5qc9Y8dvk1F71QeQcE9swLE");
-  let hist = chain.get_history_semantic(addr, 100000, 1)?;
-  //assert!(hist.len() == 19);
   let (block, _) = chain.get_block_by_height(441 as u64).unwrap();
   println!("Block 441 is {:?}. Count: {:?}", block.hash().to_hex(), block.len());
   for i in 0..block.len() {
@@ -121,20 +148,5 @@ assert_ok!{ gets_unspents_for_an_address {
         inputs.nth(j).previous_output().hash().to_hex());
     }
   }
-
-  println!("done");
-
-  /*
-  if let HistorySemantic::Received{
-    satoshis, ref transaction_hash, position, is_spent } = hist[13]
-  {
-    println!("Satoshis: {:?}", satoshis); // 49.08808802 BTC
-    //74c2146fe18fb7c652dc10a5b126d0754df44ad8c1d24ed399ef561001e05c43
-    println!("Transaction Hash: {:?}", transaction_hash);
-    println!("Position: {:?}", position); // 0
-    println!("Spent: {:?}", is_spent); // True
-  }else{
-    assert!(false, "First item was not received")
-  }
-  */
 }}
+*/

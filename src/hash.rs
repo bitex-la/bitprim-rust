@@ -5,6 +5,11 @@ pub struct Hash {
 }
 
 impl Hash {
+  /* For compatibility with opaque collection that needs a builder */
+  pub fn new(raw: Hash) -> Hash {
+    raw
+  }
+
   pub fn to_hex(&self) -> String {
     self.hash.iter()
       .rev()
