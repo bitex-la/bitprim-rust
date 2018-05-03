@@ -7,11 +7,17 @@ opaque_droppable_resource! {
   drop: chain_input_list_destruct
 }
 
-opaque_collection! {
+opaque_collection_destructible_inherit! {
   InputList, InputListP,
   Input, InputP,
   chain_input_list_count,
   chain_input_list_nth
+}
+
+impl InputList {
+  pub fn destructible(raw: InputListP, destruct_on_drop: bool) -> InputList {
+    InputList{raw, destruct_on_drop, iter: 0}
+  }
 }
 
 extern { 

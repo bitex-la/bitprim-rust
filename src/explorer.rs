@@ -1,6 +1,5 @@
 /*
   Implement all Drops. (Anything constructed must be dropped. look for class and ::new references)
-  Implement all iters. Anything with nth is a potential iter.
 */
 use errors::*;
 use executor::Executor;

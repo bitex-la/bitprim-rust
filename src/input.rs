@@ -8,13 +8,17 @@ opaque_droppable_resource!{
 }
 
 impl Input {
+  pub fn destructible(raw: InputP, destruct_on_drop: bool) -> Input{
+    Input{ raw, destruct_on_drop }
+  }
+
   pub fn is_valid(&self) -> bool {
     (unsafe{ chain_input_is_valid(self.raw) }) == 1
   }
 
   pub fn previous_output(&self) -> OutputPoint {
     let raw = unsafe{ chain_input_previous_output(self.raw)};
-    OutputPoint::new(raw)
+    OutputPoint::destructible(raw, self.destruct_on_drop)
   }
 }
 

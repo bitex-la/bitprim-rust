@@ -106,6 +106,80 @@ macro_rules! opaque_collection {
   )
 }
 
+macro_rules! opaque_collection_destructible_inherit {
+  ($collection:ty, $collection_ptr:ty,
+   $item:tt, $item_ptr:ty,
+   $extern_count:ident, $extern_nth:ident) => (
+    impl $collection {
+      pub fn len(&self) -> u64 {
+        unsafe{ $extern_count(self.raw) }
+      }
+
+      pub fn get(&self, n: u32) -> $item {
+        $item::destructible(unsafe{ $extern_nth(self.raw, n) }, self.destruct_on_drop)
+      }
+    }
+
+    impl Iterator for $collection {
+      type Item = $item;
+
+      fn next(&mut self) -> Option<Self::Item> {
+        let current = self.iter;
+        if current == self.len() as u32 {
+          self.iter = 0;
+          None
+        } else {
+          self.iter += 1;
+          Some(self.get(current))
+        }
+      }
+    }
+
+    extern { 
+      pub fn $extern_count(list: $collection_ptr) -> u64;
+      pub fn $extern_nth(list: $collection_ptr, n: u32)
+        -> $item_ptr;
+    }
+  )
+}
+
+macro_rules! opaque_collection_destructible {
+  ($collection:ty, $collection_ptr:ty,
+   $item:tt, $item_ptr:ty,
+   $extern_count:ident, $extern_nth:ident) => (
+    impl $collection {
+      pub fn len(&self) -> u64 {
+        unsafe{ $extern_count(self.raw) }
+      }
+
+      pub fn get(&self, n: u32) -> $item {
+        $item::destructible(unsafe{ $extern_nth(self.raw, n) }, false)
+      }
+    }
+
+    impl Iterator for $collection {
+      type Item = $item;
+
+      fn next(&mut self) -> Option<Self::Item> {
+        let current = self.iter;
+        if current == self.len() as u32 {
+          self.iter = 0;
+          None
+        } else {
+          self.iter += 1;
+          Some(self.get(current))
+        }
+      }
+    }
+
+    extern { 
+      pub fn $extern_count(list: $collection_ptr) -> u64;
+      pub fn $extern_nth(list: $collection_ptr, n: u32)
+        -> $item_ptr;
+    }
+  )
+}
+
 
 /* Most functions in the bitprim API have async and sync variants.
    Both variants receive exactly the same arguments and produce the same values.

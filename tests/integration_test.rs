@@ -26,15 +26,13 @@ macro_rules! assert_ok {
 fn build_test_executor() -> Result<Executor> {
   let f = File::create("/dev/null").unwrap();
   let exec = Executor::new("./tests/btc-testnet.cfg", &f, &f);
-  println!("Init chain");
   exec.initchain()?;
   Ok(exec)
 }
 
 fn build_500_blocks_executor() -> Result<Executor> {
-  let exec = build_test_executor()?;
-  println!("About to run");
-  exec.run_wait()?;
+  let exec = build_test_executor().expect("Build executor");
+  let _ = exec.run_wait();
   while exec.get_chain().get_last_height()? < 500 {
     println!("Syncing {:?}", exec.get_chain().get_last_height()?);
     sleep(Duration::new(1,0));
@@ -72,7 +70,6 @@ assert_ok!{ gets_last_height_async {
     let exec = build_500_blocks_executor()?;
     exec.run(|exec, _|{
       exec.get_chain().fetch_last_height(|_chain, exit, height|{
-        println!("Async fetch last height: {}, {:?}", height, exit);
         assert!(height >= 500, "Height was not over 1000");
       })
     })
@@ -103,13 +100,9 @@ assert_ok!{ fetches_earliest_transaction_block {
 }}
 
 assert_ok!{ explores_an_address {
-  println!("Building executor");
   let explorer = build_500_blocks_executor()?.explorer();
-  println!("Explorer is here");
   let addr = PaymentAddress::from_str("mhjp3ZgbGxx5qc9Y8dvk1F71QeQcE9swLE");
-  println!("about to get history");
   let hist = explorer.address_history(addr, 100000, 1)?;
-  println!("history is here");
   //assert!(hist.len() == 19);
   assert_eq!(hist.len(), 16);
 
@@ -128,25 +121,29 @@ assert_ok!{ explores_an_address {
     position: 1,
     is_spent: true
   }));
-  println!("So far so good");
 }}
 
-/*
 assert_ok!{ navigates_by_block_without_segfaults {
-  let exec = build_500_blocks_executor()?;
+  // Destructor problems in the following:
+  // InputList.
+  // chain_input_previous_output
+  //
+  // Split opaque_collection definition leaving out the getter.
+  // Make all droppables have their own droppable constructor, that receives the parent.
+  // Make special droppable instance for Transaction where parent is unused.
+  // Opaque collection should always use 'destructible' to build.
+  // Opaque resource 
+  // Block, and transaction have plenty of methods.
+  //
+  let exec = build_500_blocks_executor().expect("500 block build failed");
   let chain = exec.get_chain();
-  let (block, _) = chain.get_block_by_height(441 as u64).unwrap();
+  let (block, _) = chain.get_block_by_height(441 as u64).expect("Block 441 wasnt there");
   println!("Block 441 is {:?}. Count: {:?}", block.hash().to_hex(), block.len());
-  for i in 0..block.len() {
-    println!("About to get Position {:?}", i);
-    let tx = block.nth(i as u32);
-    println!("Position: {:?} hash is {:?}", i, tx.hash().to_hex());
-    let inputs = tx.inputs();
-    println!("Getting {:?} inputs", inputs.len());
-    for j in 0..inputs.len() {
-      println!("Input {:?}. Valid {:?}. Hex: {:?}", j, inputs.nth(j).is_valid(),
-        inputs.nth(j).previous_output().hash().to_hex());
+  for tx in block {
+    println!("Getting TX {:?}", tx.hash().to_hex());
+    for input in tx.inputs() {
+      println!("Input Valid {:?}. Hex: {:?}", input.is_valid(),
+        input.previous_output().hash().to_hex());
     }
   }
 }}
-*/

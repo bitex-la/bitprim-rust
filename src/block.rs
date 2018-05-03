@@ -11,7 +11,7 @@ opaque_droppable_resource! {
   drop: chain_block_destruct
 }
 
-opaque_collection! {
+opaque_collection_destructible! {
   Block, BlockP,
   Transaction, TransactionP,
   chain_block_transaction_count,

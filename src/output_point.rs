@@ -11,6 +11,10 @@ impl OutputPoint {
     OutputPoint::new(raw)
   }
 
+  pub fn destructible(raw: OutputPointP, destruct_on_drop: bool) -> OutputPoint {
+    OutputPoint{raw, destruct_on_drop}
+  }
+
   pub fn hash(&self) -> Hash {
     unsafe{ output_point_get_hash(self.raw) }
   }
