@@ -1,6 +1,11 @@
 #!/bin/bash
 
-BITPRIM_VERSION=0.9
+if [[ $# -eq 0 ]] ; then
+    echo 'You need to pass a version number'
+    exit 0
+fi
+
+BITPRIM_VERSION=$1
 conan install bitprim-node-exe/$BITPRIM_VERSION@bitprim/stable -o currency=BTC
 rm bn
 rm deploy_manifest.txt
