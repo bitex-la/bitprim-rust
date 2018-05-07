@@ -40,12 +40,21 @@ function find_files {
 
 for folder in ${FOLDERS[*]}
 do
-	package_path=~/.conan/data/$folder
+	package_path=$HOME/.conan/data/$folder
+	package_path_with_version=$package_path/$BITPRIM_VERSION
 	if [ -e  $package_path ]
 	then
-		if [ -e  $package_path/$BITPRIM_VERSION ]
+		if [ -e  $package_path_with_version ]
 		then
-			find_files $package_path/$BITPRIM_VERSION
+			if [[ $folder = *"bitprim"* ]]
+			then
+				raw_full_path=$(grep "currency=${CURRENCY^^}" -r "$package_path_with_version" | grep conaninfo | head -1 | xargs -L 1 dirname)
+				full_path=${raw_full_path::-1}
+
+				find_files $raw_full_path
+			else
+				find_files $package_path_with_version
+			fi
 		else
 			last_version="$(ls -1 $package_path | tail -n 1)"
 			find_files $package_path/$last_version
