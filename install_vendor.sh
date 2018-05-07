@@ -22,7 +22,7 @@ rm deploy_manifest.txt
 function find_files {
 	for file in ${files[*]}
 	do
-		found=$(find $1 -name $file -quit)
+		found=$(find $1 -name $file -print -quit)
 		if [[ $found ]]
 		then
 			cp $found vendor/bitprim_btc/$file
