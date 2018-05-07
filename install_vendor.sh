@@ -1,27 +1,43 @@
 #!/bin/bash
 
 if [[ $# -eq 0 ]] ; then
-    echo 'You need to pass a version number'
-    exit 0
+	echo 'You need to pass a version number'
+	exit 0
 fi
+
+folders=(bitprim-blockchain bitprim-consensus bitprim-core bitprim-database bitprim-network 
+bitprim-node-cint bitprim-node boost gmp icu secp256k1)
+files=(libbitprim-blockchain.a libbitprim-consensus.a libbitprim-core.a libbitprim-database.a
+libbitprim-network.a libbitprim-node-cint.a libbitprim-node.a libboost_filesystem.a
+libboost_iostreams.a libboost_log.a libboost_program_options.a libboost_regex.a
+libboost_system.a libboost_thread.a libgmp.a libsecp256k1.a)
 
 BITPRIM_VERSION=$1
 conan install bitprim-node-exe/$BITPRIM_VERSION@bitprim/stable -o currency=BTC
+conan install bitprim-node-cint/$BITPRIM_VERSION@bitprim/stable -o currency=BTC
 rm bn
 rm deploy_manifest.txt
 
-for file in vendor/bitprim_btc/*
+# ex. find_files folder
+function find_files {
+	for file in ${files[*]}
+	do
+		cp "$(find $1 -name $file)" vendor/bitprim_btc/$file
+	done
+}
+
+for folder in ${folders[*]}
 do
 	file_name="${file##*/}"
-	folder=~/.conan/data/${file_name:3:-2}
+	dir=~/.conan/data/$folder
 	if [ -e  $folder ]
 	then
 		if [ -e  $folder/$BITPRIM_VERSION ]
 		then
-			cp "$(find $folder/$BITPRIM_VERSION -name $file_name)" vendor/bitprim_btc/${file##*/}
+			find_files $folder/$BITPRIM_VERSION
 		else
 			last_version="$(ls -1 $folder | tail -n 1)"
-			cp "$(find $folder/$last_version -name $file_name)" vendor/bitprim_btc/${file##*/}
+			find_files $folder/$last_version
 		fi
 	fi
 done
