@@ -1,12 +1,14 @@
 extern crate regex;
 use std::fs;
 use regex::Regex;
+use std::env;
 
 fn main(){
   println!(r"cargo:rustc-link-search=/usr/lib/gcc/x86_64-linux-gnu/7");
   println!(r"cargo:rustc-link-lib=static=stdc++");
 
-  let libs = "./vendor/bitprim_btc";
+  let currency_target = env::var("CURRENCY_TARGET").unwrap_or("BCH".to_string());
+  let libs = ["./vendor/bitprim_", &currency_target.to_lowercase()].join("");
   println!(r"cargo:rustc-link-search={}", libs);
 
   let re = Regex::new(r"lib([0-9A-Za-z_-]+)\.a").unwrap();
