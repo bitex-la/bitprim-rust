@@ -127,29 +127,19 @@ async_methods! {
 }
 
 impl Chain {
-  pub fn is_stale(&self) -> bool {
-    (unsafe{ chain_is_stale(self.raw) }) != 0
-  }
+    pub fn is_stale(&self) -> bool {
+        (unsafe { chain_is_stale(self.raw) }) != 0
+    }
 
-  pub fn is_spent(&self, output_point: OutputPoint) -> bool {
-    let (writex, readex) = channel();
-    self.fetch_spend(output_point, |_, error, _|{
-      writex.send(error != ExitCode::NotFound).unwrap();
-    });
-    readex.recv().unwrap()
-  }
+    pub fn is_spent(&self, output_point: OutputPoint) -> bool {
+        let (writex, readex) = channel();
+        self.fetch_spend(output_point, |_, error, _| {
+            writex.send(error != ExitCode::NotFound).unwrap();
+        });
+        readex.recv().unwrap()
+    }
 }
 
-extern {
-  pub fn chain_is_stale(chain: ChainP) -> c_int;
+extern "C" {
+    pub fn chain_is_stale(chain: ChainP) -> c_int;
 }
-
-/*
-extern_async!{
-  ChainP,
-  chain_validate_tx,
-  [(tx, TransactionP)],
-  [(something, *const c_char)]
-}
-
-*/

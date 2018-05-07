@@ -1,6 +1,7 @@
-#[macro_use] extern crate pretty_assertions;
-extern crate error_chain;
 extern crate bitprim;
+extern crate error_chain;
+#[macro_use]
+extern crate pretty_assertions;
 
 use std::fs::File;
 use std::thread::sleep;
@@ -9,6 +10,7 @@ use bitprim::{Executor, ExitCode};
 use bitprim::errors::*;
 use bitprim::payment_address::PaymentAddress;
 use bitprim::explorer::*;
+use std::str::FromStr;
 
 macro_rules! assert_ok {
   ($name:ident $body:block) => (
@@ -24,24 +26,24 @@ macro_rules! assert_ok {
 }
 
 fn build_test_executor() -> Result<Executor> {
-  let f = File::create("/dev/null").unwrap();
-  let exec = Executor::new("./tests/btc-testnet.cfg", &f, &f);
-  exec.initchain()?;
-  Ok(exec)
+    let f = File::create("/dev/null").unwrap();
+    let exec = Executor::new("./tests/btc-testnet.cfg", &f, &f);
+    exec.initchain()?;
+    Ok(exec)
 }
 
 fn build_500_blocks_executor() -> Result<Executor> {
-  let exec = build_test_executor().expect("Build executor");
-  let _ = exec.run_wait();
-  while exec.get_chain().get_last_height()? < 500 {
-    println!("Syncing {:?}", exec.get_chain().get_last_height()?);
-    sleep(Duration::new(1,0));
-  }
-  Ok(exec)
+    let exec = build_test_executor().expect("Build executor");
+    let _ = exec.run_wait();
+    while exec.get_chain().get_last_height()? < 500 {
+        println!("Syncing {:?}", exec.get_chain().get_last_height()?);
+        sleep(Duration::new(1, 0));
+    }
+    Ok(exec)
 }
 
 #[test]
-fn it_has_a_version(){
+fn it_has_a_version() {
     assert_eq!(&Executor::version(), "\"v0.9.0\"");
 }
 
@@ -102,13 +104,13 @@ assert_ok!{ fetches_earliest_transaction_block {
 assert_ok!{ explores_an_address {
   let explorer = build_500_blocks_executor()?.explorer();
   let addr = PaymentAddress::from_str("mhjp3ZgbGxx5qc9Y8dvk1F71QeQcE9swLE");
-  let hist = explorer.address_history(addr, 100000, 1)?;
-  //assert!(hist.len() == 19);
+  let hist = explorer.address_history(addr.unwrap(), 100000, 1)?;
+
   assert_eq!(hist.len(), 16);
 
   assert_eq!(hist[11], AddressHistory::Received(Received{
     satoshis: 450648,
-    transaction_hash: 
+    transaction_hash:
       "58baf615ed9e95023acb05715d3885cc48700ab548072cb5a996056786931fe3".to_string(),
     position: 1,
     is_spent: false
@@ -116,7 +118,7 @@ assert_ok!{ explores_an_address {
 
   assert_eq!(hist[10], AddressHistory::Received(Received{
     satoshis: 963007,
-    transaction_hash: 
+    transaction_hash:
       "8ff1a6d53806b2c6e0f9c82d8f1a32cee604e84ee400fc2c7f2a8d7b95ba328c".to_string(),
     position: 1,
     is_spent: true

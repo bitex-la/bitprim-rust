@@ -1,5 +1,5 @@
 macro_rules! opaque_resource {
-  ( 
+  (
     $(#[$($meta:meta),*])*
     $enum:ident, $ptr:ident, $struct:ident {
       $($name:ident: $type:ty, default: $default:expr;)*
@@ -53,7 +53,7 @@ macro_rules! opaque_destructible_resource {
 */
 macro_rules! async_and_sync_methods {
   ( $struct:tt, $ptr:ty,
-    $({ 
+    $({
         $extern_async:ident: $async:ident,
         $extern_sync:ident: $sync:ident,
         in: $in:tt,
@@ -62,7 +62,7 @@ macro_rules! async_and_sync_methods {
   ) => {
     $(
       extern_async_and_sync_methods! {
-        $struct, $ptr, { 
+        $struct, $ptr, {
           $extern_async: $async,
           $extern_sync: $sync,
           in: $in,
@@ -88,7 +88,7 @@ macro_rules! async_and_sync_methods {
 
 macro_rules! extern_async_and_sync_methods {
   ( $struct:tt, $ptr:ty,
-    $({ 
+    $({
         $extern_async:ident: $async:ident,
         $extern_sync:ident: $sync:ident,
         in: $in:tt,
@@ -125,7 +125,9 @@ macro_rules! impl_sync {
    [$($out:tt),*]
   ) => {
     impl $struct {
-      pub fn $sync(&self, $(out_name!($in): out_outer_type!($in)),*) -> Result<($(out_outer_type!($out)),*)> {
+      #[cfg_attr(feature = "cargo-clippy", allow(double_parens))]
+      pub fn $sync(&self, $(out_name!($in): out_outer_type!($in)),*) ->
+                                            Result<($(out_outer_type!($out)),*)> {
         $(out_uninitialized!($out);)*
         match unsafe{ $extern_sync(self.raw, $(to_raw!($in),)* $(out_name_as_mut_ref!($out)),* ) } {
           ExitCode::Success => Ok(($(out_value!($out)),*)),

@@ -1,6 +1,6 @@
 #[repr(C)]
-#[derive(Debug,PartialEq)]
+#[derive(Debug, PartialEq)]
 pub enum PointKind {
-  Input = 0,
-  Output = 1,
+    Input = 0,
+    Output = 1,
 }
