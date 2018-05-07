@@ -9,6 +9,8 @@ use bitprim::{Executor, ExitCode};
 use bitprim::errors::*;
 use bitprim::payment_address::PaymentAddress;
 use bitprim::explorer::*;
+use std::str::FromStr;
+use std::ops::Deref;
 
 macro_rules! assert_ok {
   ($name:ident $body:block) => (
@@ -69,7 +71,7 @@ assert_ok!{ runs_500_blocks_async {
 assert_ok!{ gets_last_height_async {
     let exec = build_500_blocks_executor()?;
     exec.run(|exec, _|{
-      exec.get_chain().fetch_last_height(|_chain, exit, height|{
+      exec.get_chain().fetch_last_height(|_chain, _exit, height|{
         assert!(height >= 500, "Height was not over 1000");
       })
     })
@@ -128,9 +130,9 @@ assert_ok!{ navigates_by_block_without_segfaults {
   let chain = exec.get_chain();
   let (block, _) = chain.get_block_by_height(441 as u64).expect("Block 441 wasnt there");
   println!("Block 441 is {:?}. Count: {:?}", block.hash().to_hex(), block.len());
-  for tx in block {
+  for tx in block.deref() {
     println!("Getting TX {:?}", tx.hash().to_hex());
-    for input in tx.inputs() {
+    for input in tx.inputs().into_iter() {
       println!("Input Valid {:?}. Hex: {:?}", input.is_valid(),
         input.previous_output().hash().to_hex());
     }
