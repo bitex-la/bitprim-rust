@@ -1,8 +1,9 @@
 use std::os::raw::c_char;
+use destructible::*;
 
-opaque_droppable_resource! {
+opaque_destructible_resource! {
   BinaryT, BinaryP, Binary {}
-  drop: binary_destruct
+  binary_destruct
 }
 
 extern { 

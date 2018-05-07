@@ -1,6 +1,3 @@
-/*
-  Implement all Drops. (Anything constructed must be dropped. look for class and ::new references)
-*/
 use errors::*;
 use executor::Executor;
 use chain::Chain;
@@ -9,6 +6,8 @@ use history_compact::HistoryCompact;
 use history_compact_list::HistoryCompactList;
 use point::Point;
 use point_kind::PointKind;
+use destructible::*;
+pub use opaque_collection::*;
 
 pub struct Explorer {
   pub executor: Executor
@@ -19,7 +18,8 @@ impl Explorer {
     -> Result<Vec<AddressHistory>>
   {
     self.chain_and_history(address, limit, since).map(|(c, history)|{
-      history.map(|i| AddressHistory::from_compact(&i, &c) ).collect()
+      let iter = OpaqueCollectionIterator{collection: history.contents.as_ref(), iter: 0 };
+      iter.map(|i| AddressHistory::from_compact(&i, &c) ).collect()
     })
   }
 
@@ -27,7 +27,8 @@ impl Explorer {
     -> Result<Vec<Received>>
   { 
     self.chain_and_history(address, limit, since).map(|(c, history)|{
-      history
+      let iter = OpaqueCollectionIterator{collection: history.contents.as_ref(), iter: 0 };
+      iter
         .filter(|i| i.point_kind() == PointKind::Input )
         .map(|i| Received::new(&i, c.is_spent(i.point().to_output_point())) )
         .collect()
@@ -38,7 +39,8 @@ impl Explorer {
     -> Result<Vec<Received>>
   { 
     self.chain_and_history(address, limit, since).map(|(c, history)|{
-      history
+      let iter = OpaqueCollectionIterator{collection: history.contents.as_ref(), iter: 0 };
+      iter
         .filter(|i| i.point_kind() == PointKind::Input )
         .filter(|i| c.is_spent(i.point().to_output_point()))
         .map(|i| Received::new(&i, false) )
@@ -47,7 +49,7 @@ impl Explorer {
   }
 
   fn chain_and_history(&self, address: PaymentAddress, limit: u64, since: u64)
-    -> Result<(Chain, HistoryCompactList)>
+    -> Result<(Chain, DestructibleBox<HistoryCompactList>)>
   {
     let chain = self.executor.get_chain();
     let history = chain.get_history(address, limit, since)?;

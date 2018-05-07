@@ -1,5 +1,7 @@
 #[macro_use] extern crate error_chain;
 #[macro_use] mod macros;
+#[macro_use] mod destructible;
+#[macro_use] mod opaque_collection;
 pub mod binary;
 pub mod point_kind;
 pub mod exit_code;

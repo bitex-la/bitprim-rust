@@ -3,15 +3,15 @@ use header::HeaderP;
 use hash::Hash;
 use transaction::{TransactionP, Transaction};
 use transaction_list::TransactionListP;
+use destructible::*;
+use opaque_collection::*;
 
-opaque_droppable_resource! {
-  BlockT, BlockP, Block {
-    iter: u32, default: 0;
-  }
-  drop: chain_block_destruct
+opaque_destructible_resource! {
+  BlockT, BlockP, Block {}
+  chain_block_destruct
 }
 
-opaque_collection_destructible! {
+derive_opaque_collection! {
   Block, BlockP,
   Transaction, TransactionP,
   chain_block_transaction_count,

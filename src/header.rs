@@ -1,9 +1,10 @@
 use std::os::raw::c_int;
 use hash::Hash;
+use destructible::*;
 
-opaque_droppable_resource!{
+opaque_destructible_resource!{
   HeaderT, HeaderP, Header {}
-  drop: chain_header_destruct
+  chain_header_destruct
 }
 
 extern {

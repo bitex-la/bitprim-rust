@@ -1,10 +1,11 @@
 use script::ScriptP;
 use payment_address::PaymentAddressP;
 use std::os::raw::c_int;
+use destructible::*;
 
-opaque_droppable_resource!{
+opaque_destructible_resource!{
   OutputT, OutputP, Output {}
-  drop: chain_output_destruct
+  chain_output_destruct
 }
 
 extern { 

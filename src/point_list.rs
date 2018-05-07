@@ -1,13 +1,13 @@
 use point::{Point, PointP};
+use destructible::*;
+use opaque_collection::*;
 
-opaque_droppable_resource!{
-  PointListT, PointListP, PointList {
-    iter: u32, default: 0;
-  }
-  drop: point_list_destruct
+opaque_destructible_resource!{
+  PointListT, PointListP, PointList {}
+  point_list_destruct
 }
 
-opaque_collection! {
+derive_opaque_collection! {
   PointList, PointListP,
   Point, PointP,
   point_list_count,

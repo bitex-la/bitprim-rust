@@ -1,14 +1,13 @@
-use std::iter::Iterator;
 use history_compact::{HistoryCompactP, HistoryCompact};
+use destructible::*;
+use opaque_collection::*;
 
-opaque_droppable_resource! {
-  HistoryCompactListT, HistoryCompactListP, HistoryCompactList {
-    iter: u32, default: 0;
-  }
-  drop: chain_history_compact_list_destruct
+opaque_destructible_resource! {
+  HistoryCompactListT, HistoryCompactListP, HistoryCompactList {}
+  chain_history_compact_list_destruct
 }
 
-opaque_collection! {
+derive_opaque_collection! {
   HistoryCompactList,
   HistoryCompactListP,
   HistoryCompact,

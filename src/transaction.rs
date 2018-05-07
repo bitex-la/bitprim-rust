@@ -3,24 +3,20 @@ use hash::Hash;
 use input_list::{InputListP, InputList};
 use output_list::OutputListP;
 use script::ScriptP;
+use destructible::*;
 
-opaque_droppable_resource!{
+opaque_destructible_resource!{
   TransactionT, TransactionP, Transaction {}
-  drop: chain_transaction_destruct
+  chain_transaction_destruct
 }
 
 impl Transaction {
-  pub fn destructible(raw: TransactionP, destruct_on_drop: bool) -> Transaction{
-    Transaction{ raw, destruct_on_drop }
-  }
-
   pub fn hash(&self) -> Hash {
     unsafe{ chain_transaction_hash(self.raw) }
   }
 
   pub fn inputs(&self) -> InputList {
-    let raw = unsafe{ chain_transaction_inputs(self.raw) };
-    InputList::destructible(raw, self.destruct_on_drop)
+    InputList::new(unsafe{ chain_transaction_inputs(self.raw) })
   }
 }
 

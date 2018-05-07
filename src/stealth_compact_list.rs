@@ -1,13 +1,13 @@
 use stealth_compact::{StealthCompact, StealthCompactP};
+use destructible::*;
+use opaque_collection::*;
 
-opaque_droppable_resource!{
-  StealthCompactListT, StealthCompactListP, StealthCompactList {
-    iter: u32, default: 0;
-  }
-  drop: stealth_compact_list_destruct
+opaque_destructible_resource!{
+  StealthCompactListT, StealthCompactListP, StealthCompactList {}
+  stealth_compact_list_destruct
 }
 
-opaque_collection! {
+derive_opaque_collection! {
   StealthCompactList, StealthCompactListP,
   StealthCompact, StealthCompactP,
   stealth_compact_list_count,

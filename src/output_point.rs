@@ -1,8 +1,9 @@
 use hash::Hash;
+use destructible::*;
 
-opaque_droppable_resource!{
+opaque_destructible_resource!{
   OutputPointT, OutputPointP, OutputPoint {}
-  drop: output_point_destruct
+  output_point_destruct
 }
 
 impl OutputPoint {
@@ -11,8 +12,8 @@ impl OutputPoint {
     OutputPoint::new(raw)
   }
 
-  pub fn destructible(raw: OutputPointP, destruct_on_drop: bool) -> OutputPoint {
-    OutputPoint{raw, destruct_on_drop}
+  pub fn destructible(raw: OutputPointP) -> OutputPoint {
+    OutputPoint::new(raw)
   }
 
   pub fn hash(&self) -> Hash {

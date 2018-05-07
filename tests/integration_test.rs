@@ -124,17 +124,6 @@ assert_ok!{ explores_an_address {
 }}
 
 assert_ok!{ navigates_by_block_without_segfaults {
-  // Destructor problems in the following:
-  // InputList.
-  // chain_input_previous_output
-  //
-  // Split opaque_collection definition leaving out the getter.
-  // Make all droppables have their own droppable constructor, that receives the parent.
-  // Make special droppable instance for Transaction where parent is unused.
-  // Opaque collection should always use 'destructible' to build.
-  // Opaque resource 
-  // Block, and transaction have plenty of methods.
-  //
   let exec = build_500_blocks_executor().expect("500 block build failed");
   let chain = exec.get_chain();
   let (block, _) = chain.get_block_by_height(441 as u64).expect("Block 441 wasnt there");

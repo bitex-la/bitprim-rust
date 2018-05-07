@@ -1,8 +1,9 @@
 use std::os::raw::{c_int, c_char};
+use destructible::*;
 
-opaque_droppable_resource!{
+opaque_destructible_resource!{
   ScriptT, ScriptP, Script {}
-  drop: chain_script_destruct
+  chain_script_destruct
 }
 
 extern { 

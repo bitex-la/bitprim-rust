@@ -1,15 +1,15 @@
 use hash::Hash;
 use header::HeaderP;
 use std::os::raw::c_int;
+use destructible::*;
+use opaque_collection::*;
 
-opaque_droppable_resource!{
-  MerkleBlockT, MerkleBlockP, MerkleBlock {
-    iter: u32, default: 0;
-  }
-  drop: chain_merkle_block_destruct
+opaque_destructible_resource!{
+  MerkleBlockT, MerkleBlockP, MerkleBlock {}
+  chain_merkle_block_destruct
 }
 
-opaque_collection! {
+derive_opaque_collection! {
   MerkleBlock, MerkleBlockP,
   Hash, Hash,
   chain_merkle_block_hash_count,

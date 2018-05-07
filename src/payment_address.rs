@@ -1,9 +1,10 @@
 use std::os::raw::{c_char, c_int};
 use std::ffi::CString;
+use destructible::*;
 
-opaque_droppable_resource!{
+opaque_destructible_resource!{
   PaymentAddressT, PaymentAddressP, PaymentAddress {}
-  drop: chain_payment_address_destruct
+  chain_payment_address_destruct
 }
 
 impl PaymentAddress {

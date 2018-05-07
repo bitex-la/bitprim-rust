@@ -1,13 +1,13 @@
 use block::{BlockP, Block};
+use destructible::*;
+use opaque_collection::*;
 
-opaque_droppable_resource!{
-  BlockListT, BlockListP, BlockList {
-    iter: u32, default: 0;
-  }	
-  drop: chain_block_list_destruct
+opaque_destructible_resource!{
+  BlockListT, BlockListP, BlockList {}	
+  chain_block_list_destruct
 }
 
-opaque_collection! {
+derive_opaque_collection! {
   BlockList, BlockListP,
 	Block, BlockP,
   chain_block_list_count,

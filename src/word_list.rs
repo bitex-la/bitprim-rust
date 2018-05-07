@@ -1,9 +1,10 @@
 use std::os::raw::c_char;
 use long_hash::LongHash;
+use destructible::*;
 
-opaque_droppable_resource!{
+opaque_destructible_resource!{
   WordListT, WordListP, WordList {}
-  drop: word_list_destruct
+  word_list_destruct
 }
 extern {
   pub fn word_list_construct() -> WordListP;

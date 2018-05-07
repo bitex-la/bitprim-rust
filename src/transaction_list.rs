@@ -1,13 +1,13 @@
 use transaction::{Transaction, TransactionP};
+use destructible::*;
+use opaque_collection::*;
 
-opaque_droppable_resource!{
-  TransactionListT, TransactionListP, TransactionList {
-    iter: u32, default: 0;
-  }
-  drop: transaction_list_destruct
+opaque_destructible_resource!{
+  TransactionListT, TransactionListP, TransactionList {}
+  transaction_list_destruct
 }
 
-opaque_collection! {
+derive_opaque_collection! {
   TransactionList, TransactionListP,
   Transaction, TransactionP,
   chain_transaction_list_count,
