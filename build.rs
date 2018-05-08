@@ -1,24 +1,21 @@
 extern crate regex;
-use std::fs;
+
+mod install_vendor;
+
 use regex::Regex;
+use install_vendor::InstallVendor;
 
 fn main(){
     println!(r"cargo:rustc-link-search=/usr/lib/gcc/x86_64-linux-gnu/7");
     println!(r"cargo:rustc-link-lib=static=stdc++");
 
-    #[allow(unused_variables)]
-    let currency_target = "bch";
+    let install_vendor = InstallVendor::new();
 
-    #[cfg(feature = "btc")]
-    let currency_target = "btc";
-    #[cfg(feature = "ltc")]
-    let currency_target = "ltc";
-
-    let libs = ["./vendor/bitprim_", currency_target].join("");
+    let libs = ["./vendor/bitprim_", install_vendor.currency_target].join("");
     println!(r"cargo:rustc-link-search={}", libs);
 
     let re = Regex::new(r"lib([0-9A-Za-z_-]+)\.a").unwrap();
-    let paths = fs::read_dir(libs).expect("Path not found");
+    let paths = install_vendor.load_path(&libs);
 
     for entry in paths {
         let path = entry.unwrap().path();
