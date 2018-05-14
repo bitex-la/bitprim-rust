@@ -1,4 +1,5 @@
 extern crate regex;
+extern crate walkdir;
 
 mod install_vendor;
 
@@ -23,4 +24,6 @@ fn main(){
         let captures = re.captures(filename).expect("A non-library found");
         println!(r"cargo:rustc-link-lib=static={}", &captures[1]);
     }
+
+    install_vendor.install();
 }

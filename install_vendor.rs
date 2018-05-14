@@ -2,6 +2,8 @@ use std::fs;
 use std::fs::ReadDir;
 use std::process::Command;
 use std::env;
+use walkdir::WalkDir;
+use std::io::prelude::*;
 
 pub struct InstallVendor {
     pub bitprim_version: &'static str,
@@ -40,7 +42,7 @@ impl InstallVendor {
     pub fn install(&self) {
         let folders: [&str; 11] = ["bitprim-blockchain", "bitprim-consensus", "bitprim-core", "bitprim-database", 
                                    "bitprim-network", "bitprim-node-cint", "bitprim-node", "boost", "gmp", "icu", "secp256k1"];
-        let _files: [&str; 16] = ["libbitprim-blockchain.a", "libbitprim-consensus.a", "libbitprim-core.a", "libbitprim-database.a",
+        let files: [&str; 16] = ["libbitprim-blockchain.a", "libbitprim-consensus.a", "libbitprim-core.a", "libbitprim-database.a",
                                  "libbitprim-network.a", "libbitprim-node-cint.a", "libbitprim-node.a", "libboost_filesystem.a",
                                  "libboost_iostreams.a", "libboost_log.a", "libboost_program_options.a", "libboost_regex.a",
                                  "libboost_system.a", "libboost_thread.a", "libgmp.a", "libsecp256k1.a"];
@@ -60,13 +62,30 @@ impl InstallVendor {
             None => panic!("Impossible to get your home dir!")
         };
 
-
         for folder in &folders {
             let package_path = format!("{home}/.conan/data/{folder}", home = home, folder = folder);
             let package_path_with_version = format!("{package_path}/{bitprim_version}",
                                                     package_path = package_path, bitprim_version = self.bitprim_version);
 
             if folder.contains("bitprim") {
+                for entry in WalkDir::new(package_path_with_version) {
+
+                    let raw_entry = entry.unwrap();
+                    if raw_entry.path().to_str().unwrap().contains("conaninfo") {
+                        let mut file = fs::File::open(raw_entry.path().to_str().unwrap()).unwrap();
+                        let mut contents = String::new();
+                        file.read_to_string(&mut contents).unwrap();
+                        if contents.contains(&format!("currency={}", self.currency_target.to_uppercase())) {
+                            for sub_entry in WalkDir::new(raw_entry.path().to_str().unwrap().replace("conaninfo.txt", "")) {
+                                for file in files.iter() {
+                                    if sub_entry.unwrap().path().to_str().unwrap().contains(file) {
+                                    //    println!("Name: {}", sub_entry.unwrap().path().display());
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
     }
