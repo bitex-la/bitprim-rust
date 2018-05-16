@@ -52,9 +52,8 @@ impl InstallVendor {
                                  bitprim_version = self.bitprim_version, currency_target = self.currency_target));
             Command::new(format!("conan install bitprim-node-cint/{bitprim_version}@bitprim/stable -o currency={currency_target}",
                                  bitprim_version = self.bitprim_version, currency_target = self.currency_target));
-            Command::new("rm").arg("bn");
-            Command::new("rm").arg("deploy_manifest.txt");
-
+            if let Err(_) = fs::remove_file("bn") {};
+            if let Err(_) = fs::remove_file("deploy_manifest.txt") {};
         }
 
         let home = match env::home_dir() {
@@ -76,10 +75,11 @@ impl InstallVendor {
                         let mut contents = String::new();
                         file.read_to_string(&mut contents).unwrap();
                         if contents.contains(&format!("currency={}", self.currency_target.to_uppercase())) {
-                            for sub_entry in WalkDir::new(raw_entry.path().to_str().unwrap().replace("conaninfo.txt", "")) {
-                                for file in files.iter() {
-                                    if sub_entry.unwrap().path().to_str().unwrap().contains(file) {
-                                    //    println!("Name: {}", sub_entry.unwrap().path().display());
+                            for sub_entry in WalkDir::new(raw_entry.path().to_str().unwrap().replace("conaninfo.txt", "")).into_iter() {
+                                let path_str = sub_entry.unwrap().path().to_str().unwrap().to_string();
+                                for file in &files {
+                                    if path_str.contains(file) {
+                                        fs::copy(path_str.clone(), format!("vendor/bitprim_{}/{}", self.currency_target, file)).unwrap();
                                     }
                                 }
                             }
