@@ -1,4 +1,4 @@
-use output::{OutputP, Output};
+use output::{Output, OutputP};
 use destructible::*;
 use opaque_collection::*;
 
@@ -14,7 +14,7 @@ derive_opaque_collection! {
   chain_output_list_nth
 }
 
-extern { 
-  pub fn chain_output_list_construct_default() -> OutputListP;
-  pub fn chain_output_list_push_back(list: OutputListP, output: OutputP);
+extern "C" {
+    pub fn chain_output_list_construct_default() -> OutputListP;
+    pub fn chain_output_list_push_back(list: OutputListP, output: OutputP);
 }

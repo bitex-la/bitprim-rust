@@ -1,4 +1,4 @@
-use history_compact::{HistoryCompactP, HistoryCompact};
+use history_compact::{HistoryCompact, HistoryCompactP};
 use destructible::*;
 use opaque_collection::*;
 

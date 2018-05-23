@@ -1,4 +1,4 @@
-use input::{InputP, Input};
+use input::{Input, InputP};
 use destructible::*;
 use opaque_collection::*;
 
@@ -14,7 +14,7 @@ derive_opaque_collection! {
   chain_input_list_nth
 }
 
-extern { 
-  pub fn chain_input_list_construct_default() -> InputListP;
-  pub fn chain_input_list_push_back(list: InputListP, input: InputP);
+extern "C" {
+    pub fn chain_input_list_construct_default() -> InputListP;
+    pub fn chain_input_list_push_back(list: InputListP, input: InputP);
 }

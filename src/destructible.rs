@@ -8,7 +8,7 @@
 use std::ops::Deref;
 
 pub trait Destructible {
-  fn destruct(&self);
+    fn destruct(&self);
 }
 
 macro_rules! derive_destructible {
@@ -25,21 +25,23 @@ macro_rules! derive_destructible {
   )
 }
 
-pub struct DestructibleBox<T:Destructible> {
-  pub contents: Box<T>
+pub struct DestructibleBox<T: Destructible> {
+    pub contents: Box<T>,
 }
 
-impl<T:Destructible> DestructibleBox<T> {
-  pub fn new(it: T) -> DestructibleBox<T> {
-    DestructibleBox{contents: Box::new(it)}
-  }
+impl<T: Destructible> DestructibleBox<T> {
+    pub fn new(it: T) -> DestructibleBox<T> {
+        DestructibleBox {
+            contents: Box::new(it),
+        }
+    }
 }
 
 impl<T: Destructible> Drop for DestructibleBox<T> {
-  fn drop(&mut self) {
-    println!("Destruction is here");
-    self.contents.destruct()
-  }
+    fn drop(&mut self) {
+        println!("Destruction is here");
+        self.contents.destruct()
+    }
 }
 
 impl<T: Destructible> Deref for DestructibleBox<T> {

@@ -14,7 +14,7 @@ derive_opaque_collection! {
   chain_transaction_list_nth
 }
 
-extern {
-  pub fn chain_transaction_list_construct_default() -> TransactionListP;
-  pub fn chain_transaction_list_push_back(list: TransactionListP, transaction: TransactionP);
+extern "C" {
+    pub fn chain_transaction_list_construct_default() -> TransactionListP;
+    pub fn chain_transaction_list_push_back(list: TransactionListP, transaction: TransactionP);
 }
