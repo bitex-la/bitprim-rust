@@ -124,17 +124,3 @@ assert_ok!{ explores_an_address {
     is_spent: true
   }));
 }}
-
-assert_ok!{ navigates_by_block_without_segfaults {
-  let exec = build_500_blocks_executor().expect("500 block build failed");
-  let chain = exec.get_chain();
-  let (block, _) = chain.get_block_by_height(441 as u64).expect("Block 441 wasnt there");
-  println!("Block 441 is {:?}. Count: {:?}", block.hash().to_hex(), block.len());
-  for tx in block {
-    println!("Getting TX {:?}", tx.hash().to_hex());
-    for input in tx.inputs() {
-      println!("Input Valid {:?}. Hex: {:?}", input.is_valid(),
-        input.previous_output().hash().to_hex());
-    }
-  }
-}}
