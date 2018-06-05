@@ -7,8 +7,7 @@ use std::io::prelude::*;
 
 pub struct InstallVendor {
     pub bitprim_version: &'static str,
-    pub currency_target: &'static str,
-    pub env: &'static str
+    pub currency_target: &'static str
 }
 
 impl InstallVendor {
@@ -28,15 +27,9 @@ impl InstallVendor {
         #[cfg(feature = "ltc")]
         let target = "ltc";
 
-        #[cfg(feature = "stable")]
-        let bitprimenv = "stable";
-        #[cfg(feature = "testing")]
-        let bitprimenv = "testing";
-
         InstallVendor {
             bitprim_version: version,
-            currency_target: target,
-            env: bitprimenv
+            currency_target: target
         }
     }
 
@@ -56,14 +49,22 @@ impl InstallVendor {
                                  "libboost_iostreams.a", "libboost_log.a", "libboost_program_options.a", "libboost_regex.a",
                                  "libboost_system.a", "libboost_thread.a", "libgmp.a", "libsecp256k1.a"];
 
-        if cfg!(target_os = "linux") {
-            Command::new(format!("conan install bitprim-node-exe/{bitprim_version}@bitprim/{env} -o currency={currency_target}",
-                                 bitprim_version = self.bitprim_version, currency_target = self.currency_target, env = self.env));
-            Command::new(format!("conan install bitprim-node-cint/{bitprim_version}@bitprim/{env} -o currency={currency_target}",
-                                 bitprim_version = self.bitprim_version, currency_target = self.currency_target, env = self.env));
-            if let Err(_) = fs::remove_file("bn") {};
-            if let Err(_) = fs::remove_file("deploy_manifest.txt") {};
-        }
+
+        //TODO: Figure it out how to put it to work
+        //if cfg!(target_os = "linux") {
+        //    println!("conan install bitprim-node-exe/{bitprim_version}@bitprim/{env} -o currency={currency_target}",
+        //             bitprim_version = self.bitprim_version, currency_target = self.currency_target.to_uppercase(), env = self.env);
+        //    Command::new(format!("/usr/bin/conan install bitprim-node-exe/{bitprim_version}@bitprim/{env} -o currency={currency_target}",
+        //                         bitprim_version = self.bitprim_version, currency_target = self.currency_target.to_uppercase(), env = self.env))
+        //            .spawn()
+        //            .expect("conan install failed");
+        //    Command::new(format!("/usr/bin/conan install bitprim-node-cint/{bitprim_version}@bitprim/{env} -o currency={currency_target}",
+        //                         bitprim_version = self.bitprim_version, currency_target = self.currency_target.to_uppercase(), env = self.env))
+        //            .spawn()
+        //            .expect("conan install failed");
+        //    if let Err(_) = fs::remove_file("bn") {};
+        //    if let Err(_) = fs::remove_file("deploy_manifest.txt") {};
+        //}
 
         let home = match env::home_dir() {
             Some(path) => format!("{}", path.display()),
