@@ -85,6 +85,7 @@ pub struct Received {
     pub transaction_hash: String,
     pub position: u32,
     pub is_spent: bool,
+    pub block_height: u32
 }
 
 impl Received {
@@ -93,6 +94,7 @@ impl Received {
             satoshis: source.get_value_or_previous_checksum(),
             transaction_hash: source.point().hash().to_hex(),
             position: source.point().index(),
+            block_height: source.height(),
             is_spent,
         }
     }

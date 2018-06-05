@@ -106,21 +106,23 @@ assert_ok!{ explores_an_address {
   let addr = PaymentAddress::from_str("mhjp3ZgbGxx5qc9Y8dvk1F71QeQcE9swLE");
   let hist = explorer.address_history(addr.unwrap(), 100000, 1)?;
 
-  assert_eq!(hist.len(), 16);
+  assert_eq!(hist.len(), 25);
 
-  assert_eq!(hist[11], AddressHistory::Received(Received{
+  assert_eq!(hist[18], AddressHistory::Received(Received{
     satoshis: 450648,
     transaction_hash:
       "58baf615ed9e95023acb05715d3885cc48700ab548072cb5a996056786931fe3".to_string(),
     position: 1,
-    is_spent: false
+    is_spent: false,
+    block_height: 429
   }));
 
-  assert_eq!(hist[10], AddressHistory::Received(Received{
+  assert_eq!(hist[17], AddressHistory::Received(Received{
     satoshis: 963007,
     transaction_hash:
       "8ff1a6d53806b2c6e0f9c82d8f1a32cee604e84ee400fc2c7f2a8d7b95ba328c".to_string(),
     position: 1,
-    is_spent: true
+    is_spent: true,
+    block_height: 429
   }));
 }}
