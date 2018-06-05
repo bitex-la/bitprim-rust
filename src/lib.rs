@@ -1,3 +1,6 @@
+extern crate serde;
+#[macro_use]
+extern crate serde_derive;
 #[macro_use]
 extern crate error_chain;
 #[macro_use]
@@ -6,6 +9,7 @@ mod macros;
 mod destructible;
 #[macro_use]
 mod opaque_collection;
+
 pub mod binary;
 pub mod point_kind;
 pub mod exit_code;
