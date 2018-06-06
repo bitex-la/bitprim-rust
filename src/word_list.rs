@@ -1,12 +1,13 @@
 use std::os::raw::c_char;
 use long_hash::LongHash;
+use destructible::*;
 
-opaque_droppable_resource!{
+opaque_destructible_resource!{
   WordListT, WordListP, WordList {}
-  drop: word_list_destruct
+  word_list_destruct
 }
-extern {
-  pub fn word_list_construct() -> WordListP;
-  pub fn word_list_add_word(word_list: WordListP, word: *const c_char);
-  pub fn wallet_mnemonics_to_seed(mnemonics: WordListP) -> LongHash;
+extern "C" {
+    pub fn word_list_construct() -> WordListP;
+    pub fn word_list_add_word(word_list: WordListP, word: *const c_char);
+    pub fn wallet_mnemonics_to_seed(mnemonics: WordListP) -> LongHash;
 }

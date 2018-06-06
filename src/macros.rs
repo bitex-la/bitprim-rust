@@ -1,5 +1,5 @@
 macro_rules! opaque_resource {
-  ( 
+  (
     $(#[$($meta:meta),*])*
     $enum:ident, $ptr:ident, $struct:ident {
       $($name:ident: $type:ty, default: $default:expr;)*
@@ -26,160 +26,25 @@ macro_rules! opaque_resource {
   )
 }
 
-macro_rules! opaque_drop {
-  ($struct:ty, $ptr:ty, $destructor:ident) => (
-    impl $struct {
-      pub fn destruct(&self) {
-        unsafe{ $destructor(self.raw) }
-      }
-    }
-
-    impl Drop for $struct {
-      fn drop(&mut self) {
-        if self.destruct_on_drop {
-          self.destruct()
-        }
-      }
-    }
-
-    extern {
-      pub fn $destructor(res: $ptr);
-    }
-  )
-}
-
-macro_rules! opaque_droppable_resource {
+macro_rules! opaque_destructible_resource {
   (
     $(#[$($meta:meta),*])*
     $enum:ident, $ptr:ident, $struct:ident {
       $($name:ident: $type:ty, default: $default:expr;)*
     }
     $(pub_fields: { $($pub_name:ident: $pub_type:ty),* },)*
-    drop: $destructor:ident
+    $destructor:ident
   ) => (
     opaque_resource!{
       $(#[$($meta),*])*
       $enum, $ptr, $struct {
-        destruct_on_drop: bool, default: true;
         $($name: $type, default: $default;)*
       }
       $(pub_fields: { $($pub_name: $pub_type),* },)*
     }
-    opaque_drop!{ $struct, $ptr, $destructor }
+    derive_destructible!{ $struct, $ptr, $destructor }
   )
 }
-
-macro_rules! opaque_collection {
-  ($collection:ty, $collection_ptr:ty,
-   $item:tt, $item_ptr:ty,
-   $extern_count:ident, $extern_nth:ident) => (
-    impl $collection {
-      pub fn len(&self) -> u64 {
-        unsafe{ $extern_count(self.raw) }
-      }
-
-      pub fn get(&self, n: u32) -> $item {
-        $item::new(unsafe{ $extern_nth(self.raw, n) })
-      }
-    }
-
-    impl Iterator for $collection {
-      type Item = $item;
-
-      fn next(&mut self) -> Option<Self::Item> {
-        let current = self.iter;
-        if current == self.len() as u32 {
-          self.iter = 0;
-          None
-        } else {
-          self.iter += 1;
-          Some(self.get(current))
-        }
-      }
-    }
-
-    extern { 
-      pub fn $extern_count(list: $collection_ptr) -> u64;
-      pub fn $extern_nth(list: $collection_ptr, n: u32)
-        -> $item_ptr;
-    }
-  )
-}
-
-macro_rules! opaque_collection_destructible_inherit {
-  ($collection:ty, $collection_ptr:ty,
-   $item:tt, $item_ptr:ty,
-   $extern_count:ident, $extern_nth:ident) => (
-    impl $collection {
-      pub fn len(&self) -> u64 {
-        unsafe{ $extern_count(self.raw) }
-      }
-
-      pub fn get(&self, n: u32) -> $item {
-        $item::destructible(unsafe{ $extern_nth(self.raw, n) }, self.destruct_on_drop)
-      }
-    }
-
-    impl Iterator for $collection {
-      type Item = $item;
-
-      fn next(&mut self) -> Option<Self::Item> {
-        let current = self.iter;
-        if current == self.len() as u32 {
-          self.iter = 0;
-          None
-        } else {
-          self.iter += 1;
-          Some(self.get(current))
-        }
-      }
-    }
-
-    extern { 
-      pub fn $extern_count(list: $collection_ptr) -> u64;
-      pub fn $extern_nth(list: $collection_ptr, n: u32)
-        -> $item_ptr;
-    }
-  )
-}
-
-macro_rules! opaque_collection_destructible {
-  ($collection:ty, $collection_ptr:ty,
-   $item:tt, $item_ptr:ty,
-   $extern_count:ident, $extern_nth:ident) => (
-    impl $collection {
-      pub fn len(&self) -> u64 {
-        unsafe{ $extern_count(self.raw) }
-      }
-
-      pub fn get(&self, n: u32) -> $item {
-        $item::destructible(unsafe{ $extern_nth(self.raw, n) }, false)
-      }
-    }
-
-    impl Iterator for $collection {
-      type Item = $item;
-
-      fn next(&mut self) -> Option<Self::Item> {
-        let current = self.iter;
-        if current == self.len() as u32 {
-          self.iter = 0;
-          None
-        } else {
-          self.iter += 1;
-          Some(self.get(current))
-        }
-      }
-    }
-
-    extern { 
-      pub fn $extern_count(list: $collection_ptr) -> u64;
-      pub fn $extern_nth(list: $collection_ptr, n: u32)
-        -> $item_ptr;
-    }
-  )
-}
-
 
 /* Most functions in the bitprim API have async and sync variants.
    Both variants receive exactly the same arguments and produce the same values.
@@ -188,7 +53,7 @@ macro_rules! opaque_collection_destructible {
 */
 macro_rules! async_and_sync_methods {
   ( $struct:tt, $ptr:ty,
-    $({ 
+    $({
         $extern_async:ident: $async:ident,
         $extern_sync:ident: $sync:ident,
         in: $in:tt,
@@ -197,7 +62,7 @@ macro_rules! async_and_sync_methods {
   ) => {
     $(
       extern_async_and_sync_methods! {
-        $struct, $ptr, { 
+        $struct, $ptr, {
           $extern_async: $async,
           $extern_sync: $sync,
           in: $in,
@@ -223,7 +88,7 @@ macro_rules! async_and_sync_methods {
 
 macro_rules! extern_async_and_sync_methods {
   ( $struct:tt, $ptr:ty,
-    $({ 
+    $({
         $extern_async:ident: $async:ident,
         $extern_sync:ident: $sync:ident,
         in: $in:tt,
@@ -260,7 +125,9 @@ macro_rules! impl_sync {
    [$($out:tt),*]
   ) => {
     impl $struct {
-      pub fn $sync(&self, $(out_name!($in): out_outer_type!($in)),*) -> Result<($(out_outer_type!($out)),*)> {
+      #[cfg_attr(feature = "cargo-clippy", allow(double_parens))]
+      pub fn $sync(&self, $(out_name!($in): out_outer_type!($in)),*) ->
+                                            Result<($(out_outer_type!($out)),*)> {
         $(out_uninitialized!($out);)*
         match unsafe{ $extern_sync(self.raw, $(to_raw!($in),)* $(out_name_as_mut_ref!($out)),* ) } {
           ExitCode::Success => Ok(($(out_value!($out)),*)),
@@ -283,7 +150,7 @@ macro_rules! impl_async {
     }
   ) => {
     impl $struct {
-      pub fn $async<H>(&$self, $(out_name!($in): out_outer_type!($in),)* handler: H)
+      pub fn $async<H>(&$self, $(out_name!($in): in_outer_type!($in),)* handler: H)
         where H: FnOnce($self_ty, ExitCode, $(out_outer_type!($out)),*)
       {
         extern fn raw_handler<H>(
@@ -358,27 +225,44 @@ macro_rules! extern_sync {
 
 macro_rules! out_name {
   (($name:ident, $inner:ty)) => { $name };
+  (($name:ident, $inner:ty, $outer:expr, managed)) => { $name };
   (($name:ident, $inner:ty, $outer:expr)) => { $name }
 }
 macro_rules! out_inner_type {
   (($name:ident, $inner:ty)) => { $inner };
+  (($name:ident, $inner:ty, $outer:expr, managed)) => { $inner };
   (($name:ident, $inner:ty, $outer:expr)) => { $inner }
+}
+macro_rules! in_outer_type {
+  (($name:ident, $inner:ty)) => { $inner };
+  (($name:ident, $inner:ty, $outer:ty, managed)) => { $outer };
+  (($name:ident, $inner:ty, $outer:ty)) => { $outer }
 }
 macro_rules! out_outer_type {
   (($name:ident, $inner:ty)) => { $inner };
+  (($name:ident, $inner:ty, $outer:ty, managed)) => {
+    DestructibleBox<$outer>
+  };
   (($name:ident, $inner:ty, $outer:ty)) => { $outer }
 }
 macro_rules! out_value {
   (($out:ident, $inner:ty)) => { $out };
+  (($out:ident, $inner:ty, $outer:tt, managed)) => {
+    DestructibleBox::new($outer::new($out))
+  };
   (($out:ident, $inner:ty, $outer:tt)) => { $outer::new($out) }
 }
 macro_rules! to_raw {
   (($out:ident, $inner:ty)) => { $out };
+  (($out:ident, $inner:ty, $outer:tt, managed)) => { $out.contents.raw };
   (($out:ident, $inner:ty, $outer:tt)) => { $out.raw }
 }
 
 macro_rules! out_uninitialized {
   (($name:ident, $inner:ty)) => {
+    let mut $name = unsafe{ mem::uninitialized() };
+  };
+  (($name:ident, $inner:ty, $outer:ty, managed)) => {
     let mut $name = unsafe{ mem::uninitialized() };
   };
   (($name:ident, $inner:ty, $outer:ty)) => {
@@ -388,5 +272,6 @@ macro_rules! out_uninitialized {
 
 macro_rules! out_name_as_mut_ref {
   (($name:ident, $inner:ty)) => { &mut $name };
+  (($name:ident, $inner:ty, $outer:ty, managed)) => { &mut $name };
   (($name:ident, $inner:ty, $outer:ty)) => { &mut $name };
 }

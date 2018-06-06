@@ -16,6 +16,7 @@ use executor::*;
 use stealth_compact_list::*;
 use input_point::*;
 use output_point::*;
+use destructible::*;
 
 opaque_resource!{
   #[derive(Clone)]
@@ -35,7 +36,7 @@ async_and_sync_methods! {
   { chain_fetch_block_by_height: fetch_block_by_height,
     chain_get_block_by_height: get_block_by_height,
     in: [(height, u64)],
-    out: [ (block, BlockP, Block), (new_height, u64) ]
+    out: [ (block, BlockP, Block, managed), (new_height, u64) ]
   },
   { chain_fetch_block_height: fetch_block_height,
     chain_get_block_height: get_block_height,
@@ -49,47 +50,47 @@ async_and_sync_methods! {
       (limit, u64),
       (from_height, u64)
     ],
-    out: [ ( history, HistoryCompactListP, HistoryCompactList ) ]
+    out: [ ( history, HistoryCompactListP, HistoryCompactList, managed) ]
   },
   { chain_fetch_block_header_by_height: fetch_block_header_by_height,
     chain_get_block_header_by_height: get_block_header_by_height,
     in: [(height, u64)],
-    out: [ (header, HeaderP, Header ), (new_height, u64) ]
+    out: [ (header, HeaderP, Header, managed), (new_height, u64) ]
   },
   { chain_fetch_block_header_by_hash: fetch_block_header_by_hash,
     chain_get_block_header_by_hash: get_block_header_by_hash,
     in: [(hash, Hash)],
-    out: [ (header, HeaderP, Header), (height, u64) ]
+    out: [ (header, HeaderP, Header, managed), (height, u64) ]
   },
   { chain_fetch_block_by_hash: fetch_block_by_hash,
     chain_get_block_by_hash: get_block_by_hash,
     in: [(hash, Hash)],
-    out: [ (block, BlockP, Block), (height, u64) ]
+    out: [ (block, BlockP, Block, managed), (height, u64) ]
   },
   { chain_fetch_merkle_block_by_height: fetch_merkle_block_by_height,
     chain_get_merkle_block_by_height: get_merkle_block_by_height,
     in: [(height, u64)],
-    out: [ (block, MerkleBlockP, MerkleBlock), (new_height, u64) ]
+    out: [ (block, MerkleBlockP, MerkleBlock, managed), (new_height, u64) ]
   },
   { chain_fetch_merkle_block_by_hash: fetch_merkle_block_by_hash,
     chain_get_merkle_block_by_hash: get_merkle_block_by_hash,
     in: [(hash, Hash)],
-    out: [ (block, MerkleBlockP, MerkleBlock), (height, u64) ]
+    out: [ (block, MerkleBlockP, MerkleBlock, managed), (height, u64) ]
   },
   { chain_fetch_compact_block_by_height: fetch_compact_block_by_height,
     chain_get_compact_block_by_height: get_compact_block_by_height,
     in: [(height, u64)],
-    out: [ (block, CompactBlockP, CompactBlock), (new_height, u64) ]
+    out: [ (block, CompactBlockP, CompactBlock, managed), (new_height, u64) ]
   },
   { chain_fetch_compact_block_by_hash: fetch_compact_block_by_hash,
     chain_get_compact_block_by_hash: get_compact_block_by_hash,
     in: [(hash, Hash)],
-    out: [ (block, CompactBlockP, CompactBlock), (height, u64) ]
+    out: [ (block, CompactBlockP, CompactBlock, managed), (height, u64) ]
   },
   { chain_fetch_transaction: fetch_transaction,
     chain_get_transaction: get_transaction,
     in: [(hash, Hash), (require_confirmed, c_int)],
-    out: [ (transaction, TransactionP, Transaction), (height, u64) ]
+    out: [ (transaction, TransactionP, Transaction, managed), (height, u64) ]
   },
   { chain_fetch_transaction_position: fetch_transaction_position,
     chain_get_transaction_position: get_transaction_position,
@@ -99,7 +100,7 @@ async_and_sync_methods! {
   { chain_fetch_stealth: fetch_stealth,
     chain_get_stealth: get_stealth,
     in: [(filter, BinaryP), (from_height, u64)],
-    out: [ (out_list, StealthCompactListP, StealthCompactList) ]
+    out: [ (out_list, StealthCompactListP, StealthCompactList, managed) ]
   },
   { chain_organize_block: organize_block,
     chain_organize_block_sync: organize_block_sync,
@@ -126,29 +127,19 @@ async_methods! {
 }
 
 impl Chain {
-  pub fn is_stale(&self) -> bool {
-    (unsafe{ chain_is_stale(self.raw) }) != 0
-  }
+    pub fn is_stale(&self) -> bool {
+        (unsafe { chain_is_stale(self.raw) }) != 0
+    }
 
-  pub fn is_spent(&self, output_point: OutputPoint) -> bool {
-    let (writex, readex) = channel();
-    self.fetch_spend(output_point, |_, error, _|{
-      writex.send(error != ExitCode::NotFound).unwrap();
-    });
-    readex.recv().unwrap()
-  }
+    pub fn is_spent(&self, output_point: OutputPoint) -> bool {
+        let (writex, readex) = channel();
+        self.fetch_spend(output_point, |_, error, _| {
+            writex.send(error != ExitCode::NotFound).unwrap();
+        });
+        readex.recv().unwrap()
+    }
 }
 
-extern {
-  pub fn chain_is_stale(chain: ChainP) -> c_int;
+extern "C" {
+    pub fn chain_is_stale(chain: ChainP) -> c_int;
 }
-
-/*
-extern_async!{
-  ChainP,
-  chain_validate_tx,
-  [(tx, TransactionP)],
-  [(something, *const c_char)]
-}
-
-*/
