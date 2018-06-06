@@ -79,7 +79,7 @@ impl Explorer {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub struct Received {
     pub satoshis: u64,
     pub transaction_hash: String,
@@ -100,7 +100,7 @@ impl Received {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub struct Sent {
     pub transaction_hash: String,
     pub position: u32,
@@ -115,7 +115,7 @@ impl Sent {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub enum AddressHistory {
     Received(Received),
     Sent(Sent),
