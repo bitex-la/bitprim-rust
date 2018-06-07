@@ -17,6 +17,5 @@ regex = "0.2"
 pretty_assertions = "0.5.1"
 
 [features]
-default = ["bch"]
 btc = []
 bch = []
