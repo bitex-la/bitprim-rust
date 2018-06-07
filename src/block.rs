@@ -22,6 +22,10 @@ impl Block {
     pub fn hash(&self) -> Hash {
         unsafe { chain_block_hash(self.raw) }
     }
+
+    pub fn header(&self) -> HeaderP {
+        unsafe { chain_block_header(self.raw) }
+    }
 }
 
 extern "C" {
