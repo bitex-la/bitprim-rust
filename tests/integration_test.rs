@@ -12,6 +12,10 @@ use bitprim::payment_address::PaymentAddress;
 use bitprim::explorer::*;
 use std::str::FromStr;
 
+#[cfg(feature="btc")]
+const CURRENCY: &str = "btc";
+
+#[cfg(feature="bch")]
 const CURRENCY: &str = "bch";
 
 macro_rules! assert_ok {

@@ -16,3 +16,7 @@ regex = "0.2"
 [dev-dependencies]
 pretty_assertions = "0.5.1"
 
+[features]
+default = ["bch"]
+btc = []
+bch = []

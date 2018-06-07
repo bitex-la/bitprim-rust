@@ -6,7 +6,11 @@ fn main() {
     println!(r"cargo:rustc-link-search=/usr/lib/gcc/x86_64-linux-gnu/7");
     println!(r"cargo:rustc-link-lib=static=stdc++");
 
+    #[cfg(feature="btc")]
     let libs = "./vendor/bitprim_btc";
+    #[cfg(feature="bch")]
+    let libs = "./vendor/bitprim_bch";
+
     println!(r"cargo:rustc-link-search={}", libs);
 
     let re = Regex::new(r"lib([0-9A-Za-z_-]+)\.a").unwrap();
