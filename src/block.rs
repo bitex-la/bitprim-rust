@@ -1,5 +1,5 @@
 use std::os::raw::{c_char, c_int};
-use header::HeaderP;
+use header::{Header, HeaderP};
 use hash::Hash;
 use transaction::{Transaction, TransactionP};
 use transaction_list::TransactionListP;
@@ -21,10 +21,6 @@ derive_opaque_collection! {
 impl Block {
     pub fn hash(&self) -> Hash {
         unsafe { chain_block_hash(self.raw) }
-    }
-
-    pub fn header(&self) -> HeaderP {
-        unsafe { chain_block_header(self.raw) }
     }
 }
 
