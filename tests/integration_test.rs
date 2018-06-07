@@ -12,6 +12,8 @@ use bitprim::payment_address::PaymentAddress;
 use bitprim::explorer::*;
 use std::str::FromStr;
 
+const CURRENCY: &str = "bch";
+
 macro_rules! assert_ok {
   ($name:ident $body:block) => (
     #[test]
@@ -27,7 +29,7 @@ macro_rules! assert_ok {
 
 fn build_test_executor() -> Result<Executor> {
     let f = File::create("/dev/null").unwrap();
-    let exec = Executor::new("./tests/btc-testnet.cfg", &f, &f);
+    let exec = Executor::new(&format!("./tests/{}-testnet.cfg", CURRENCY), &f, &f);
     exec.initchain()?;
     Ok(exec)
 }
