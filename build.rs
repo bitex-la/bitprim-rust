@@ -10,6 +10,8 @@ fn main() {
     let libs = "./vendor/bitprim_btc";
     #[cfg(feature="bch")]
     let libs = "./vendor/bitprim_bch";
+    #[cfg(feature="ltc")]
+    let libs = "./vendor/bitprim_ltc";
 
     println!(r"cargo:rustc-link-search={}", libs);
 

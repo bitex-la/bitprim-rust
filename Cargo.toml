@@ -19,3 +19,4 @@ pretty_assertions = "0.5.1"
 [features]
 btc = []
 bch = []
+ltc = []
