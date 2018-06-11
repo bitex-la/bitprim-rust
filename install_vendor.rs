@@ -1,6 +1,5 @@
 use std::fs;
 use std::fs::ReadDir;
-use std::process::Command;
 use std::env;
 use walkdir::WalkDir;
 use std::io::prelude::*;
@@ -13,12 +12,10 @@ pub struct InstallVendor {
 impl InstallVendor {
 
     pub fn new() -> InstallVendor {
-        #[cfg(feature = "v0_9_0")]
-        let version = "0.9";
-        #[cfg(feature = "v0_9_1")]
-        let version = "0.9.1";
         #[cfg(feature = "v0_10_0")]
         let version = "0.10.0";
+        #[cfg(feature = "v0_11_0")]
+        let version = "0.11.0";
 
         #[cfg(feature = "bch")]
         let target = "bch";
