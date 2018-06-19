@@ -8,6 +8,12 @@ opaque_destructible_resource!{
   chain_output_destruct
 }
 
+impl Output {
+    pub fn script(&self) -> ScriptP {
+        unsafe { chain_output_script(self.raw) }
+    }
+}
+
 extern "C" {
     pub fn chain_output_construct_default() -> OutputP;
     pub fn chain_output_construct(value: u64, script: ScriptP) -> OutputP;

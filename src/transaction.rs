@@ -18,6 +18,14 @@ impl Transaction {
     pub fn inputs(&self) -> InputList {
         InputList::new(unsafe { chain_transaction_inputs(self.raw) })
     }
+
+    pub fn version(&self) -> u32 {
+        unsafe { chain_transaction_version(self.raw) }
+    }
+
+    pub fn locktime(&self) -> u32 {
+        unsafe { chain_transaction_locktime(self.raw) }
+    }
 }
 
 extern "C" {

@@ -16,6 +16,14 @@ impl Input {
     pub fn previous_output(&self) -> OutputPoint {
         OutputPoint::new(unsafe { chain_input_previous_output(self.raw) })
     }
+
+    pub fn sequence(&self) -> u32 {
+        unsafe { chain_input_sequence(self.raw) }
+    }
+
+    pub fn script(&self) -> ScriptP {
+        unsafe { chain_input_script(self.raw) }
+    }
 }
 
 extern "C" {
