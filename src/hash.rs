@@ -1,6 +1,6 @@
 use hex_error::HexError;
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[repr(C, packed)]
 pub struct Hash {
     pub hash: [u8; 32usize],
