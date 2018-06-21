@@ -48,12 +48,7 @@ impl Explorer {
                     iter: 0,
                 };
                 iter.filter(|i| i.point_kind() == PointKind::Input)
-                    .map(|i| {
-                        let hash = i.point().hash();
-                        Received::new(&i,
-                                      c.is_spent(i.point().to_output_point()),
-                                      c.get_transaction(hash.clone(), 0).expect(&format!("Error obtaining Transaction: {}", hash.to_hex())).0.deref())
-                    })
+                    .map(|i| Received::new(&i, c.is_spent(i.point().to_output_point())) )
                     .collect()
             })
     }
@@ -72,12 +67,7 @@ impl Explorer {
                 };
                 iter.filter(|i| i.point_kind() == PointKind::Input)
                     .filter(|i| c.is_spent(i.point().to_output_point()))
-                    .map(|i| {
-                        let hash = i.point().hash();
-                        Received::new(&i,
-                                      false,
-                                      c.get_transaction(hash.clone(), 0).expect(&format!("Error obtaining Transaction: {}", hash.to_hex())).0.deref())
-                    })
+                    .map(|i| Received::new(&i, false) )
                     .collect()
             })
     }
@@ -101,24 +91,16 @@ pub struct Received {
     pub position: u32,
     pub is_spent: bool,
     pub block_height: u32,
-    pub version: u32,
-    pub locktime: u32,
-    pub inputs: InputList,
-    pub outputs: OutputList
 }
 
 impl Received {
-    pub fn new(source: &HistoryCompact, is_spent: bool, tx: &Transaction) -> Received {
+    pub fn new(source: &HistoryCompact, is_spent: bool) -> Received {
         Received {
             satoshis: source.get_value_or_previous_checksum(),
             transaction_hash: source.point().hash().to_hex(),
             position: source.point().index(),
             block_height: source.height(),
             is_spent,
-            version: tx.version(),
-            locktime: tx.locktime(),
-            inputs: tx.inputs(),
-            outputs: tx.outputs()
         }
     }
 }
@@ -147,13 +129,10 @@ pub enum AddressHistory {
 impl AddressHistory {
     pub fn from_compact(source: &HistoryCompact, chain: &Chain) -> AddressHistory {
         let point = source.point();
-        let hash = source.point().hash();
-        let transaction = chain.get_transaction(hash.clone(), 0).expect(&format!("Error obtaining Transaction: {}", hash.to_hex())).0;
         match source.point_kind() {
             PointKind::Input => AddressHistory::Received(Received::new(
                 source,
-                chain.is_spent(source.point().to_output_point()),
-                transaction.deref()
+                chain.is_spent(source.point().to_output_point()) 
             )),
             PointKind::Output => AddressHistory::Sent(Sent::new(&point)),
         }

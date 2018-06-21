@@ -121,31 +121,13 @@ assert_ok!{ explores_an_address {
 
   assert_eq!(hist.len(), 25);
 
-  let input1 = Input::construct_default();
-  let input2 = Input::construct_default();
-
-  let input_list = InputList::construct_default();
-  input_list.push(input1);
-  input_list.push(input2);
-
-  let output1 = Output::construct_default();
-  let output2 = Output::construct_default();
-
-  let output_list = OutputList::construct_default();
-  output_list.push(output1);
-  output_list.push(output2);
-
   assert_eq!(hist[18], AddressHistory::Received(Received{
     satoshis: 450648,
     transaction_hash:
       "58baf615ed9e95023acb05715d3885cc48700ab548072cb5a996056786931fe3".to_string(),
     position: 1,
     is_spent: false,
-    block_height: 429,
-    version: 0,
-    locktime: 0,
-    inputs: input_list.clone(),
-    outputs: output_list.clone()
+    block_height: 429
   }));
 
   assert_eq!(hist[17], AddressHistory::Received(Received{
@@ -154,10 +136,6 @@ assert_ok!{ explores_an_address {
       "8ff1a6d53806b2c6e0f9c82d8f1a32cee604e84ee400fc2c7f2a8d7b95ba328c".to_string(),
     position: 1,
     is_spent: true,
-    block_height: 429,
-    version: 0,
-    locktime: 0,
-    inputs: input_list,
-    outputs: output_list
+    block_height: 429
   }));
 }}
