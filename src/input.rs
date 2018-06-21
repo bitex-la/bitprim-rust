@@ -9,6 +9,10 @@ opaque_destructible_resource!{
 }
 
 impl Input {
+    pub fn construct_default() -> InputP {
+        unsafe { chain_input_construct_default() }
+    }
+
     pub fn is_valid(&self) -> bool {
         (unsafe { chain_input_is_valid(self.raw) }) == 1
     }

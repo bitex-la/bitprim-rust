@@ -9,6 +9,10 @@ opaque_destructible_resource!{
 }
 
 impl Output {
+    pub fn construct_default() -> OutputP {
+        unsafe { chain_output_construct_default() }
+    }
+
     pub fn script(&self) -> ScriptP {
         unsafe { chain_output_script(self.raw) }
     }

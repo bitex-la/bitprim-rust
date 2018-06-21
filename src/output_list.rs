@@ -3,7 +3,7 @@ use destructible::*;
 use opaque_collection::*;
 
 opaque_destructible_resource!{
-  #[derive(Debug, PartialEq)]
+  #[derive(Debug, Clone, PartialEq)]
   OutputListT, OutputListP, OutputList {}
   chain_output_list_destruct
 }
@@ -15,6 +15,15 @@ derive_opaque_collection! {
   chain_output_list_nth
 }
 
+impl OutputList {
+    pub fn construct_default() -> OutputList {
+        OutputList::new(unsafe { chain_output_list_construct_default() })
+    }
+
+    pub fn push(&self, output: OutputP) {
+        unsafe { chain_output_list_push_back(self.raw, output) }
+    }
+}
 extern "C" {
     pub fn chain_output_list_construct_default() -> OutputListP;
     pub fn chain_output_list_push_back(list: OutputListP, output: OutputP);
