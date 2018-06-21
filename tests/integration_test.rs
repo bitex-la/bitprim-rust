@@ -10,11 +10,8 @@ use bitprim::{Executor, ExitCode};
 use bitprim::errors::*;
 use bitprim::payment_address::PaymentAddress;
 use bitprim::explorer::*;
+use bitprim::hash::Hash;
 use std::str::FromStr;
-use bitprim::input::Input;
-use bitprim::output::Output;
-use bitprim::input_list::InputList;
-use bitprim::output_list::OutputList;
 
 #[cfg(feature="btc")]
 const CURRENCY: &str = "btc";
@@ -121,10 +118,12 @@ assert_ok!{ explores_an_address {
 
   assert_eq!(hist.len(), 25);
 
+  let hash1 = Hash::from_hex("58baf615ed9e95023acb05715d3885cc48700ab548072cb5a996056786931fe3").unwrap();
+  let hash2 = Hash::from_hex("8ff1a6d53806b2c6e0f9c82d8f1a32cee604e84ee400fc2c7f2a8d7b95ba328c").unwrap();
+
   assert_eq!(hist[18], AddressHistory::Received(Received{
     satoshis: 450648,
-    transaction_hash:
-      "58baf615ed9e95023acb05715d3885cc48700ab548072cb5a996056786931fe3".to_string(),
+    transaction_hash: hash1,
     position: 1,
     is_spent: false,
     block_height: 429
@@ -132,8 +131,7 @@ assert_ok!{ explores_an_address {
 
   assert_eq!(hist[17], AddressHistory::Received(Received{
     satoshis: 963007,
-    transaction_hash:
-      "8ff1a6d53806b2c6e0f9c82d8f1a32cee604e84ee400fc2c7f2a8d7b95ba328c".to_string(),
+    transaction_hash: hash2,
     position: 1,
     is_spent: true,
     block_height: 429

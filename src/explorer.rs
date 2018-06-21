@@ -1,16 +1,12 @@
-use std::ops::Deref;
-
 use errors::*;
 use executor::Executor;
 use chain::Chain;
 use payment_address::PaymentAddress;
 use history_compact::HistoryCompact;
 use history_compact_list::HistoryCompactList;
-use transaction::Transaction;
 use point::Point;
+use hash::Hash;
 use point_kind::PointKind;
-use input_list::InputList;
-use output_list::OutputList;
 use destructible::*;
 pub use opaque_collection::*;
 
@@ -87,7 +83,7 @@ impl Explorer {
 #[derive(Debug, PartialEq)]
 pub struct Received {
     pub satoshis: u64,
-    pub transaction_hash: String,
+    pub transaction_hash: Hash,
     pub position: u32,
     pub is_spent: bool,
     pub block_height: u32,
@@ -97,7 +93,7 @@ impl Received {
     pub fn new(source: &HistoryCompact, is_spent: bool) -> Received {
         Received {
             satoshis: source.get_value_or_previous_checksum(),
-            transaction_hash: source.point().hash().to_hex(),
+            transaction_hash: source.point().hash(),
             position: source.point().index(),
             block_height: source.height(),
             is_spent,

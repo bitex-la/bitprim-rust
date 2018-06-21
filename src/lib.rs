@@ -45,6 +45,7 @@ pub mod wallet_hd;
 pub mod wallet_ec;
 pub mod word_list;
 pub mod explorer;
+pub mod hex_error;
 
 pub use executor::Executor;
 pub use exit_code::ExitCode;
