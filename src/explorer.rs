@@ -1,4 +1,5 @@
 use std::cmp::Ordering;
+use std::ops::Deref;
 
 use errors::*;
 use executor::Executor;
@@ -10,6 +11,8 @@ use point::Point;
 use hash::Hash;
 use point_kind::PointKind;
 use destructible::*;
+use transaction::Transaction;
+use destructible::DestructibleBox;
 pub use opaque_collection::*;
 
 pub struct Explorer {
@@ -46,7 +49,7 @@ impl Explorer {
                     iter: 0,
                 };
                 iter.filter(|i| i.point_kind() == PointKind::Input)
-                    .map(|i| Received::new(&i, c.is_spent(i.point().to_output_point())) )
+                    .map(|i| Received::new(&i, &c, c.is_spent(i.point().to_output_point())) )
                     .collect()
             })
     }
@@ -66,7 +69,7 @@ impl Explorer {
                 let mut vec = 
                     iter.filter(|i| i.point_kind() == PointKind::Input)
                     .filter(|i| c.is_spent(i.point().to_output_point()))
-                    .map(|i| Received::new(&i, false) )
+                    .map(|i| Received::new(&i, &c, false) )
                     .collect::<Vec<Received>>();
                 vec.sort_unstable();
                 vec
@@ -92,16 +95,23 @@ pub struct Received {
     pub position: u32,
     pub is_spent: bool,
     pub block_height: u32,
+    pub version: u32,
+    pub locktime: u32
 }
 
 impl Received {
-    pub fn new(source: &HistoryCompact, is_spent: bool) -> Received {
+    pub fn new(source: &HistoryCompact, chain: &Chain, is_spent: bool) -> Received {
+        let hash = source.point().hash();
+        let mut raw_transaction = DestructibleBox::new(Transaction::construct_default());
+        chain.fetch_transaction(hash.clone(), 1, |_chain, _exit_code, tx, _height| raw_transaction = tx );
         Received {
             satoshis: source.get_value_or_previous_checksum(),
-            transaction_hash: source.point().hash(),
+            transaction_hash: hash,
             position: source.point().index(),
             block_height: source.height(),
             is_spent,
+            version: raw_transaction.version(),
+            locktime: raw_transaction.locktime()
         }
     }
 }
@@ -145,6 +155,7 @@ impl AddressHistory {
         match source.point_kind() {
             PointKind::Input => AddressHistory::Received(Received::new(
                 source,
+                &chain,
                 chain.is_spent(source.point().to_output_point()) 
             )),
             PointKind::Output => AddressHistory::Sent(Sent::new(&point)),

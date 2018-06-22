@@ -126,7 +126,9 @@ assert_ok!{ explores_an_address {
     transaction_hash: hash1,
     position: 1,
     is_spent: false,
-    block_height: 429
+    block_height: 429,
+    version: 1,
+    locktime: 0
   }));
 
   assert_eq!(hist[17], AddressHistory::Received(Received{
@@ -134,6 +136,8 @@ assert_ok!{ explores_an_address {
     transaction_hash: hash2,
     position: 1,
     is_spent: true,
-    block_height: 429
+    block_height: 429,
+    version: 1,
+    locktime: 0
   }));
 }}

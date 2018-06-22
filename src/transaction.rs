@@ -19,6 +19,10 @@ impl Transaction {
         unsafe { chain_transaction_construct(version, locktime, inputs, outputs) }
     }
 
+    pub fn construct_default() -> Transaction {
+        Transaction::new(unsafe { chain_transaction_construct_default() })
+    }
+
     pub fn hash(&self) -> Hash {
         unsafe { chain_transaction_hash(self.raw) }
     }
