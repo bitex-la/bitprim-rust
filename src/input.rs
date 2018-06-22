@@ -4,6 +4,7 @@ use script::ScriptP;
 use destructible::*;
 
 opaque_destructible_resource!{
+  #[derive(Debug, Clone)]
   InputT, InputP, Input {}
   chain_input_destruct
 }

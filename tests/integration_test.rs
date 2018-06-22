@@ -13,6 +13,9 @@ use bitprim::explorer::*;
 use bitprim::hash::Hash;
 use std::str::FromStr;
 
+use bitprim::input_list::InputList;
+use bitprim::output_list::OutputList;
+
 #[cfg(feature="btc")]
 const CURRENCY: &str = "btc";
 
@@ -121,6 +124,13 @@ assert_ok!{ explores_an_address {
   let hash1 = Hash::from_hex("58baf615ed9e95023acb05715d3885cc48700ab548072cb5a996056786931fe3").unwrap();
   let hash2 = Hash::from_hex("8ff1a6d53806b2c6e0f9c82d8f1a32cee604e84ee400fc2c7f2a8d7b95ba328c").unwrap();
 
+  let input_list = InputList::construct_default();
+  let output_list = OutputList::construct_default();
+
+  if let AddressHistory::Received(ref received) = hist[18] {
+      println!("{:?}", received.inputs.len());
+  }
+
   assert_eq!(hist[18], AddressHistory::Received(Received{
     satoshis: 450648,
     transaction_hash: hash1,
@@ -128,7 +138,9 @@ assert_ok!{ explores_an_address {
     is_spent: false,
     block_height: 429,
     version: 1,
-    locktime: 0
+    locktime: 0,
+    inputs: input_list.clone(),
+    outputs: output_list.clone()
   }));
 
   assert_eq!(hist[17], AddressHistory::Received(Received{
@@ -138,6 +150,8 @@ assert_ok!{ explores_an_address {
     is_spent: true,
     block_height: 429,
     version: 1,
-    locktime: 0
+    locktime: 0,
+    inputs: input_list,
+    outputs: output_list
   }));
 }}

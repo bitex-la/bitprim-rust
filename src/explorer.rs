@@ -1,5 +1,4 @@
 use std::cmp::Ordering;
-use std::ops::Deref;
 
 use errors::*;
 use executor::Executor;
@@ -10,9 +9,10 @@ use history_compact_list::HistoryCompactList;
 use point::Point;
 use hash::Hash;
 use point_kind::PointKind;
-use destructible::*;
 use transaction::Transaction;
 use destructible::DestructibleBox;
+use input_list::InputList;
+use output_list::OutputList;
 pub use opaque_collection::*;
 
 pub struct Explorer {
@@ -96,7 +96,9 @@ pub struct Received {
     pub is_spent: bool,
     pub block_height: u32,
     pub version: u32,
-    pub locktime: u32
+    pub locktime: u32,
+    pub inputs: InputList,
+    pub outputs: OutputList
 }
 
 impl Received {
@@ -111,7 +113,9 @@ impl Received {
             block_height: source.height(),
             is_spent,
             version: raw_transaction.version(),
-            locktime: raw_transaction.locktime()
+            locktime: raw_transaction.locktime(),
+            inputs: raw_transaction.inputs(),
+            outputs: raw_transaction.outputs()
         }
     }
 }

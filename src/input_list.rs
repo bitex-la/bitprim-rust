@@ -3,7 +3,7 @@ use destructible::*;
 use opaque_collection::*;
 
 opaque_destructible_resource! {
-  #[derive(Debug, Clone, PartialEq)]
+  #[derive(Debug, Clone, PartialEq, Eq)]
   InputListT, InputListP, InputList {}
   chain_input_list_destruct
 }
