@@ -1,6 +1,7 @@
+use std::cmp::Ordering;
 use hex_error::HexError;
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[repr(C, packed)]
 pub struct Hash {
     pub hash: [u8; 32usize],
@@ -44,5 +45,17 @@ impl Hash {
            ret[31 - i] = hi * 0x10 + lo;
         }
         Ok(Hash { hash: ret })
+    }
+}
+
+impl Ord for Hash {
+    fn cmp(&self, other: &Hash) -> Ordering {
+        self.hash.cmp(&other.hash)
+    }
+}
+
+impl PartialOrd for Hash {
+    fn partial_cmp(&self, other: &Hash) -> Option<Ordering> {
+        Some(self.cmp(other))
     }
 }

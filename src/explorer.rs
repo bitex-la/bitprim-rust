@@ -1,3 +1,5 @@
+use std::cmp::Ordering;
+
 use errors::*;
 use executor::Executor;
 use chain::Chain;
@@ -61,10 +63,13 @@ impl Explorer {
                     collection: history.contents.as_ref(),
                     iter: 0,
                 };
-                iter.filter(|i| i.point_kind() == PointKind::Input)
+                let mut vec = 
+                    iter.filter(|i| i.point_kind() == PointKind::Input)
                     .filter(|i| c.is_spent(i.point().to_output_point()))
                     .map(|i| Received::new(&i, false) )
-                    .collect()
+                    .collect::<Vec<Received>>();
+                vec.sort_unstable();
+                vec
             })
     }
 
@@ -80,7 +85,7 @@ impl Explorer {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct Received {
     pub satoshis: u64,
     pub transaction_hash: Hash,
@@ -98,6 +103,18 @@ impl Received {
             block_height: source.height(),
             is_spent,
         }
+    }
+}
+
+impl Ord for Received {
+    fn cmp(&self, other: &Received) -> Ordering {
+        self.transaction_hash.cmp(&other.transaction_hash)
+    }
+}
+
+impl PartialOrd for Received {
+    fn partial_cmp(&self, other: &Received) -> Option<Ordering> {
+        Some(self.cmp(other))
     }
 }
 
