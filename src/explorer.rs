@@ -1,3 +1,5 @@
+use std::cmp::Ordering;
+
 use errors::*;
 use executor::Executor;
 use chain::Chain;
@@ -5,8 +7,12 @@ use payment_address::PaymentAddress;
 use history_compact::HistoryCompact;
 use history_compact_list::HistoryCompactList;
 use point::Point;
+use hash::Hash;
 use point_kind::PointKind;
-use destructible::*;
+use transaction::Transaction;
+use destructible::DestructibleBox;
+use input_list::InputList;
+use output_list::OutputList;
 pub use opaque_collection::*;
 
 pub struct Explorer {
@@ -26,7 +32,7 @@ impl Explorer {
                     collection: history.contents.as_ref(),
                     iter: 0,
                 };
-                iter.map(|i| AddressHistory::from_compact(&i, &c)).collect()
+                iter.map(|i| AddressHistory::from_compact(&i, &c, &self.executor)).collect()
             })
     }
 
@@ -43,7 +49,7 @@ impl Explorer {
                     iter: 0,
                 };
                 iter.filter(|i| i.point_kind() == PointKind::Input)
-                    .map(|i| Received::new(&i, c.is_spent(i.point().to_output_point())))
+                    .map(|i| Received::new(&i, self.executor.clone(), c.is_spent(i.point().to_output_point())) )
                     .collect()
             })
     }
@@ -60,10 +66,13 @@ impl Explorer {
                     collection: history.contents.as_ref(),
                     iter: 0,
                 };
-                iter.filter(|i| i.point_kind() == PointKind::Input)
+                let mut vec = 
+                    iter.filter(|i| i.point_kind() == PointKind::Input)
                     .filter(|i| c.is_spent(i.point().to_output_point()))
-                    .map(|i| Received::new(&i, false))
-                    .collect()
+                    .map(|i| Received::new(&i, self.executor.clone(), false) )
+                    .collect::<Vec<Received>>();
+                vec.sort_unstable();
+                vec
             })
     }
 
@@ -79,28 +88,50 @@ impl Explorer {
     }
 }
 
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct Received {
     pub satoshis: u64,
-    pub transaction_hash: String,
+    pub transaction_hash: Hash,
     pub position: u32,
     pub is_spent: bool,
-    pub block_height: u32
+    pub block_height: u32,
+    pub version: u32,
+    pub locktime: u32,
+    pub inputs: InputList,
+    pub outputs: OutputList
 }
 
 impl Received {
-    pub fn new(source: &HistoryCompact, is_spent: bool) -> Received {
+    pub fn new(source: &HistoryCompact, exec: Executor, is_spent: bool) -> Received {
+        let hash = source.point().hash();
+        let transaction = exec.get_chain().get_transaction(hash.clone(), 1).expect("Error getting transaction from Node");
         Received {
             satoshis: source.get_value_or_previous_checksum(),
-            transaction_hash: source.point().hash().to_hex(),
+            transaction_hash: hash,
             position: source.point().index(),
             block_height: source.height(),
             is_spent,
+            version: transaction.0.version(),
+            locktime: transaction.0.locktime(),
+            inputs: transaction.0.inputs(),
+            outputs: transaction.0.outputs()
         }
     }
 }
 
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
+impl Ord for Received {
+    fn cmp(&self, other: &Received) -> Ordering {
+        self.transaction_hash.cmp(&other.transaction_hash)
+    }
+}
+
+impl PartialOrd for Received {
+    fn partial_cmp(&self, other: &Received) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+#[derive(Debug, PartialEq)]
 pub struct Sent {
     pub transaction_hash: String,
     pub position: u32,
@@ -115,19 +146,20 @@ impl Sent {
     }
 }
 
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, PartialEq)]
 pub enum AddressHistory {
     Received(Received),
     Sent(Sent),
 }
 
 impl AddressHistory {
-    pub fn from_compact(source: &HistoryCompact, chain: &Chain) -> AddressHistory {
+    pub fn from_compact(source: &HistoryCompact, chain: &Chain, exec: &Executor) -> AddressHistory {
         let point = source.point();
         match source.point_kind() {
             PointKind::Input => AddressHistory::Received(Received::new(
                 source,
-                chain.is_spent(source.point().to_output_point()),
+                exec.clone(),
+                chain.is_spent(source.point().to_output_point()) 
             )),
             PointKind::Output => AddressHistory::Sent(Sent::new(&point)),
         }

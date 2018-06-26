@@ -10,7 +10,20 @@ use bitprim::{Executor, ExitCode};
 use bitprim::errors::*;
 use bitprim::payment_address::PaymentAddress;
 use bitprim::explorer::*;
+use bitprim::hash::Hash;
 use std::str::FromStr;
+
+use bitprim::input_list::InputList;
+use bitprim::output_list::OutputList;
+
+#[cfg(feature="btc")]
+const CURRENCY: &str = "btc";
+
+#[cfg(feature="bch")]
+const CURRENCY: &str = "bch";
+
+#[cfg(feature="ltc")]
+const CURRENCY: &str = "ltc";
 
 macro_rules! assert_ok {
   ($name:ident $body:block) => (
@@ -27,7 +40,7 @@ macro_rules! assert_ok {
 
 fn build_test_executor() -> Result<Executor> {
     let f = File::create("/dev/null").unwrap();
-    let exec = Executor::new("./tests/btc-testnet.cfg", &f, &f);
+    let exec = Executor::new(&format!("./tests/{}-testnet.cfg", CURRENCY), &f, &f);
     exec.initchain()?;
     Ok(exec)
 }
@@ -108,21 +121,37 @@ assert_ok!{ explores_an_address {
 
   assert_eq!(hist.len(), 25);
 
+  let hash1 = Hash::from_hex("58baf615ed9e95023acb05715d3885cc48700ab548072cb5a996056786931fe3").unwrap();
+  let hash2 = Hash::from_hex("8ff1a6d53806b2c6e0f9c82d8f1a32cee604e84ee400fc2c7f2a8d7b95ba328c").unwrap();
+
+  let input_list = InputList::construct_default();
+  let output_list = OutputList::construct_default();
+
+  if let AddressHistory::Received(ref received) = hist[18] {
+      println!("{:?}", received.inputs.len());
+  }
+
   assert_eq!(hist[18], AddressHistory::Received(Received{
     satoshis: 450648,
-    transaction_hash:
-      "58baf615ed9e95023acb05715d3885cc48700ab548072cb5a996056786931fe3".to_string(),
+    transaction_hash: hash1,
     position: 1,
     is_spent: false,
-    block_height: 429
+    block_height: 429,
+    version: 1,
+    locktime: 0,
+    inputs: input_list.clone(),
+    outputs: output_list.clone()
   }));
 
   assert_eq!(hist[17], AddressHistory::Received(Received{
     satoshis: 963007,
-    transaction_hash:
-      "8ff1a6d53806b2c6e0f9c82d8f1a32cee604e84ee400fc2c7f2a8d7b95ba328c".to_string(),
+    transaction_hash: hash2,
     position: 1,
     is_spent: true,
-    block_height: 429
+    block_height: 429,
+    version: 1,
+    locktime: 0,
+    inputs: input_list,
+    outputs: output_list
   }));
 }}

@@ -1,7 +1,7 @@
 use std::os::raw::{c_char, c_int};
 use hash::Hash;
 use input_list::{InputList, InputListP};
-use output_list::OutputListP;
+use output_list::{OutputList, OutputListP};
 use script::ScriptP;
 use destructible::*;
 
@@ -11,12 +11,36 @@ opaque_destructible_resource!{
 }
 
 impl Transaction {
+    pub fn construct(version: u32,
+                     locktime: u32,
+                     inputs: InputListP,
+                     outputs: OutputListP
+                    ) -> TransactionP {
+        unsafe { chain_transaction_construct(version, locktime, inputs, outputs) }
+    }
+
+    pub fn construct_default() -> Transaction {
+        Transaction::new(unsafe { chain_transaction_construct_default() })
+    }
+
     pub fn hash(&self) -> Hash {
         unsafe { chain_transaction_hash(self.raw) }
     }
 
     pub fn inputs(&self) -> InputList {
         InputList::new(unsafe { chain_transaction_inputs(self.raw) })
+    }
+
+    pub fn outputs(&self) -> OutputList {
+        OutputList::new(unsafe { chain_transaction_outputs(self.raw) })
+    }
+
+    pub fn version(&self) -> u32 {
+        unsafe { chain_transaction_version(self.raw) }
+    }
+
+    pub fn locktime(&self) -> u32 {
+        unsafe { chain_transaction_locktime(self.raw) }
     }
 }
 

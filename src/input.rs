@@ -4,17 +4,30 @@ use script::ScriptP;
 use destructible::*;
 
 opaque_destructible_resource!{
+  #[derive(Debug, Clone)]
   InputT, InputP, Input {}
   chain_input_destruct
 }
 
 impl Input {
+    pub fn construct_default() -> InputP {
+        unsafe { chain_input_construct_default() }
+    }
+
     pub fn is_valid(&self) -> bool {
         (unsafe { chain_input_is_valid(self.raw) }) == 1
     }
 
     pub fn previous_output(&self) -> OutputPoint {
         OutputPoint::new(unsafe { chain_input_previous_output(self.raw) })
+    }
+
+    pub fn sequence(&self) -> u32 {
+        unsafe { chain_input_sequence(self.raw) }
+    }
+
+    pub fn script(&self) -> ScriptP {
+        unsafe { chain_input_script(self.raw) }
     }
 }
 

@@ -7,6 +7,12 @@ opaque_destructible_resource!{
   chain_header_destruct
 }
 
+impl Header {
+    pub fn timestamp(&self) -> u32 {
+        unsafe { chain_header_timestamp(self.raw) }
+    }
+}
+
 extern "C" {
     pub fn chain_header_factory_from_data(version: u32, data: *mut u8, n: u64) -> HeaderP;
     pub fn chain_header_satoshi_fixed_size(version: u32) -> u64;

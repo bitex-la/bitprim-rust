@@ -4,8 +4,19 @@ use std::os::raw::c_int;
 use destructible::*;
 
 opaque_destructible_resource!{
+  #[derive(Debug, Clone)]
   OutputT, OutputP, Output {}
   chain_output_destruct
+}
+
+impl Output {
+    pub fn construct_default() -> OutputP {
+        unsafe { chain_output_construct_default() }
+    }
+
+    pub fn script(&self) -> ScriptP {
+        unsafe { chain_output_script(self.raw) }
+    }
 }
 
 extern "C" {

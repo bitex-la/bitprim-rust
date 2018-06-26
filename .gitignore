@@ -5,4 +5,6 @@ Cargo.lock
 **/*.swp
 **/*.swo
 tests/btc-testnet-files/*
+tests/btc-testnet-files-backup/*
+tests/bch-testnet-files/*
 rusty-tags.vi

@@ -1,5 +1,5 @@
 use std::os::raw::{c_char, c_int};
-use header::HeaderP;
+use header::{Header, HeaderP};
 use hash::Hash;
 use transaction::{Transaction, TransactionP};
 use transaction_list::TransactionListP;
