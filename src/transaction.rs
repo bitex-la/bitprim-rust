@@ -6,6 +6,7 @@ use script::ScriptP;
 use destructible::*;
 
 opaque_destructible_resource!{
+  #[derive(Debug, Clone, PartialEq, Eq)]
   TransactionT, TransactionP, Transaction {}
   chain_transaction_destruct
 }
