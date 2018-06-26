@@ -90,7 +90,7 @@ async_and_sync_methods! {
   { chain_fetch_transaction: fetch_transaction,
     chain_get_transaction: get_transaction,
     in: [(hash, Hash), (require_confirmed, c_int)],
-    out: [ (transaction, TransactionP, Transaction, managed), (height, u64) ]
+    out: [ (transaction, TransactionP, Transaction, managed), (height, u64), (index, u64) ]
   },
   { chain_fetch_transaction_position: fetch_transaction_position,
     chain_get_transaction_position: get_transaction_position,
