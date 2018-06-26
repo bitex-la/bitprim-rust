@@ -107,7 +107,7 @@ impl Received {
         }
     }
 
-    pub fn get_transaction(&self, exec: Executor) -> DestructibleBox<Transaction> {
+    pub fn get_transaction(&self, exec: &Executor) -> DestructibleBox<Transaction> {
         exec.get_chain().get_transaction(self.transaction_hash.clone(), 1).expect("Error getting transaction from Node").0
     }
 }
