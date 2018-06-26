@@ -19,6 +19,10 @@ impl OutputPoint {
     pub fn hash(&self) -> Hash {
         unsafe { output_point_get_hash(self.raw) }
     }
+
+    pub fn index(&self) -> u32 {
+        unsafe { output_point_get_index(self.raw) }
+    }
 }
 
 extern "C" {

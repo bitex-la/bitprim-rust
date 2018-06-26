@@ -1,9 +1,16 @@
 use std::os::raw::{c_char, c_int};
+use std::ffi::CStr;
 use destructible::*;
 
 opaque_destructible_resource!{
   ScriptT, ScriptP, Script {}
   chain_script_destruct
+}
+
+impl Script {
+    pub fn to_str(&self, active_forks: u32) -> &str {
+        unsafe {  CStr::from_ptr(chain_script_to_string(self.raw, active_forks)).to_str().unwrap() }
+    }
 }
 
 extern "C" {
