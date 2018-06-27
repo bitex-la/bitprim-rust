@@ -1,6 +1,8 @@
 use std::os::raw::{c_char, c_int};
 use std::ffi::CStr;
+use std::slice;
 use destructible::*;
+use hash::Hash;
 
 opaque_destructible_resource!{
   ScriptT, ScriptP, Script {}
@@ -10,6 +12,16 @@ opaque_destructible_resource!{
 impl Script {
     pub fn to_str(&self, active_forks: u32) -> &str {
         unsafe {  CStr::from_ptr(chain_script_to_string(self.raw, active_forks)).to_str().unwrap() }
+    }
+
+    pub fn data(&self, prefix: i32) -> Hash {
+        let mut out_size = 0;
+        let mut result: [u8; 32usize] = Default::default();
+        let slice = unsafe { slice::from_raw_parts(chain_script_to_data(self.raw, prefix, &mut out_size), 32usize) };
+        result.copy_from_slice(&slice[0..32]);
+        Hash {
+            hash: result
+        }
     }
 }
 
