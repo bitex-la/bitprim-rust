@@ -98,7 +98,7 @@ pub struct Received {
     pub output_details: Vec<OutputDetail>
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct InputDetail {
     pub prev_hash: Hash,
     pub prev_index: u32,
@@ -106,7 +106,7 @@ pub struct InputDetail {
     pub script_sig: String
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct OutputDetail {
     pub amount: u64,
     pub script_pubkey: String
