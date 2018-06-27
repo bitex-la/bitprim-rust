@@ -100,7 +100,7 @@ pub struct Received {
 
 #[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct InputDetail {
-    pub prev_hash: Hash,
+    pub prev_hash: String,
     pub prev_index: u32,
     pub sequence: u32,
     pub script_sig: String
@@ -127,7 +127,7 @@ impl Received {
             input_details: transaction.inputs().into_iter().map(|input| {
                 let output_point = input.previous_output();
                 InputDetail {
-                    prev_hash: output_point.hash(),
+                    prev_hash: output_point.hash().to_hex(),
                     prev_index: output_point.index(),
                     sequence: input.sequence(),
                     script_sig: input.script().to_hex(0)

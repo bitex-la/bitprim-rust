@@ -134,7 +134,7 @@ assert_ok!{ explores_an_address {
     locktime: 0,
     input_details: vec![ 
         InputDetail {
-            prev_hash: Hash::from_hex("b0d95df6f5ff04e908f167efb8bf5b258ff62345b5ae555245fa4c6cdca72468").unwrap(),
+            prev_hash: "b0d95df6f5ff04e908f167efb8bf5b258ff62345b5ae555245fa4c6cdca72468".to_string(),
             prev_index: 0,
             sequence: 4294967295,
             script_sig: "47304402200c510cdabae063d4b378441fc3a7d61e4046a9c67e8b207a300fe934bf83bed30220385100118db78c5daaa4b0b740c76838e322b50bbf2ac9b47d2b4019614db1b8012103d13e48291037cf0027faaf6268364d2936ae37d0a644855af44a392f1f104569".to_string()
@@ -162,7 +162,7 @@ assert_ok!{ explores_an_address {
     locktime: 0,
     input_details: vec![ 
         InputDetail {
-            prev_hash: Hash::from_hex("1ffc95acd2f54841a72523bfa24c2b2cc37cee2551a95071d40ce30c46062b53").unwrap(),
+            prev_hash: "1ffc95acd2f54841a72523bfa24c2b2cc37cee2551a95071d40ce30c46062b53".to_string(),
             prev_index: 0,
             sequence: 4294967295,
             script_sig: "483045022100a828b48621524e59ae1379f7cd64baec562cdf0c8f056d99b13bf76f1fb9dacb022023294a454d4e2c74a42962ebd1cea9b2f3094d4a6848b0d0f95200c0465db6500121037aed90da521434cfb6c14b8a7854beb168b2aba03e38f08a8960e2fcdb3cb3eb".to_string()
