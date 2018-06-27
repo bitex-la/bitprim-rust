@@ -130,13 +130,13 @@ impl Received {
                     prev_hash: output_point.hash(),
                     prev_index: output_point.index(),
                     sequence: input.sequence(),
-                    script_sig: input.script().data(0).to_hex()
+                    script_sig: input.script().to_hex(0)
                 }
             }).collect(),
             output_details: transaction.outputs().into_iter().map(|output| {
                 OutputDetail {
                     amount: output.value(),
-                    script_pubkey: output.script().data(0).to_hex()
+                    script_pubkey: output.script().to_hex(0)
                 }
             }).collect()
         }
