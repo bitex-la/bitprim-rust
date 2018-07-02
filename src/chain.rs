@@ -139,7 +139,8 @@ impl Chain {
         readex.recv().unwrap()
     }
 
-    pub fn broadcast(&self, hash: Hash) -> Result<bool> {
+    pub fn broadcast(&self, raw_hash: &str) -> Result<bool> {
+        let hash = Hash::from_hex(raw_hash).expect("Wrong Hash");
         match self.get_transaction(hash, 1) {
             Ok(transaction_tuple) => {
                 let (writex, readex) = channel();
