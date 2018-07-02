@@ -138,6 +138,20 @@ impl Chain {
         });
         readex.recv().unwrap()
     }
+
+    pub fn broadcast(&self, hash: Hash) -> Result<bool> {
+        match self.get_transaction(hash, 1) {
+            Ok(transaction_tuple) => {
+                let (writex, readex) = channel();
+                self.organize_transaction(transaction_tuple.0.raw, |_chain, error| {
+                    writex.send(error != ExitCode::NotFound).unwrap();
+                });
+                readex.recv().unwrap();
+                Ok(true)
+            },
+            Err(error) => Err(error)
+        }
+    }
 }
 
 extern "C" {
