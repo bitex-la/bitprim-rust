@@ -139,19 +139,13 @@ impl Chain {
         readex.recv().unwrap()
     }
 
-    pub fn broadcast(&self, raw_hash: &str) -> Result<bool> {
-        let hash = Hash::from_hex(raw_hash).expect("Wrong Hash");
-        match self.get_transaction(hash, 1) {
-            Ok(transaction_tuple) => {
-                let (writex, readex) = channel();
-                self.organize_transaction(transaction_tuple.0.raw, |_chain, error| {
-                    writex.send(error != ExitCode::NotFound).unwrap();
-                });
-                readex.recv().unwrap();
-                Ok(true)
-            },
-            Err(error) => Err(error)
-        }
+    pub fn broadcast(&self, raw_hash: &str) -> bool {
+        let transaction = Transaction::from_data(raw_hash);
+        let (writex, readex) = channel();
+        self.organize_transaction(transaction.raw, |_chain, error| {
+            writex.send(error != ExitCode::NotFound).unwrap();
+        });
+        readex.recv().unwrap()
     }
 }
 

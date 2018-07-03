@@ -1,5 +1,6 @@
 use std::os::raw::{c_char, c_int};
 use hash::Hash;
+use base16;
 use input_list::{InputList, InputListP};
 use output_list::{OutputList, OutputListP};
 use script::ScriptP;
@@ -42,6 +43,11 @@ impl Transaction {
 
     pub fn locktime(&self) -> u32 {
         unsafe { chain_transaction_locktime(self.raw) }
+    }
+
+    pub fn from_data(data: &str) -> Transaction {
+        let chunk: Vec<u8> = base16::decode(data.as_bytes()).expect("Wrong raw transaction hash");
+        Transaction::new(unsafe { chain_transaction_factory_from_data(1, chunk.as_ptr(), chunk.len() as u64) })
     }
 }
 
@@ -98,4 +104,5 @@ extern "C" {
     pub fn chain_transaction_inputs(transaction: TransactionP) -> InputListP;
     pub fn chain_transaction_to_data(script: ScriptP, wire: c_int, out_size: *mut u64)
         -> *const u8;
+    pub fn chain_transaction_factory_from_data(version: u32, data: *const u8, n: u64) -> TransactionP;
 }
