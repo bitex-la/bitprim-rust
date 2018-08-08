@@ -65,7 +65,7 @@ impl Explorer {
                 };
                 let mut vec = 
                     iter.filter(|i| i.point_kind() == PointKind::Input)
-                    .filter(|i| c.is_spent(i.point().to_output_point()))
+                    .filter(|i| !c.is_spent(i.point().to_output_point()) )
                     .map(|i| Received::new(&i, &self.executor, false) )
                     .collect::<Vec<Received>>();
                 vec.sort_unstable();
