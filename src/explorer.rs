@@ -85,7 +85,7 @@ impl Explorer {
     }
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Received {
     pub satoshis: u64,
     pub transaction_hash: Hash,
