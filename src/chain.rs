@@ -139,13 +139,14 @@ impl Chain {
         readex.recv().unwrap()
     }
 
-    pub fn broadcast(&self, raw_hash: &str) -> bool {
+    pub fn broadcast(&self, raw_hash: &str) -> Hash {
         let transaction = Transaction::from_data(raw_hash);
         let (writex, readex) = channel();
         self.organize_transaction(transaction.raw, |_chain, error| {
             writex.send(error != ExitCode::NotFound).unwrap();
         });
-        readex.recv().unwrap()
+        readex.recv().unwrap();
+        transaction.hash()
     }
 }
 
