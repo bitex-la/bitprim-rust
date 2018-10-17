@@ -12,8 +12,8 @@ pub struct InstallVendor {
 impl InstallVendor {
 
     pub fn new() -> InstallVendor {
-        #[cfg(feature = "v0_12_0")]
-        let version = "0.12.0";
+        #[cfg(feature = "v0_14_0")]
+        let version = "0.14.0";
         #[cfg(feature = "v0_11_0")]
         let version = "0.11.0";
 
