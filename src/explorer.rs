@@ -45,9 +45,12 @@ impl Explorer {
                     collection: history.contents.as_ref(),
                     iter: 0,
                 };
-                iter.filter(|i| i.point_kind() == PointKind::Input)
-                    .map(|i| Received::new(&i, &self.executor, c.is_spent(i.point().to_output_point())) )
-                    .collect()
+                let mut vec = 
+                    iter.filter(|i| i.point_kind() == PointKind::Input)
+                        .map(|i| Received::new(&i, &self.executor, c.is_spent(i.point().to_output_point())) )
+                        .collect::<Vec<Received>>();
+                vec.sort_unstable();
+                vec
             })
     }
 
