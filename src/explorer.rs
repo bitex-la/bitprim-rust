@@ -10,6 +10,7 @@ use point::Point;
 use hash::Hash;
 use point_kind::PointKind;
 use destructible::DestructibleBox;
+use settings::Setting;
 pub use opaque_collection::*;
 
 pub struct Explorer {
@@ -111,6 +112,7 @@ pub struct InputDetail {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct OutputDetail {
     pub amount: u64,
+    pub address: String,
     pub script_pubkey: String
 }
 
@@ -118,6 +120,7 @@ impl Received {
     pub fn new(source: &HistoryCompact, exec: &Executor, is_spent: bool) -> Received {
         let hash = source.point().hash();
         let transaction = exec.get_chain().get_transaction(hash.clone(), 1).expect("Error getting transaction from Node").0;
+        let network = Setting::network(exec);
         Received {
             satoshis: source.get_value_or_previous_checksum(),
             transaction_hash: hash,
@@ -138,6 +141,7 @@ impl Received {
             output_details: transaction.outputs().into_iter().map(|output| {
                 OutputDetail {
                     amount: output.value(),
+                    address: output.address(network - 1),
                     script_pubkey: output.script().to_hex(0)
                 }
             }).collect()
