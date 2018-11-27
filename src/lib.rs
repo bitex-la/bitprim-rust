@@ -3,6 +3,9 @@ extern crate serde;
 extern crate serde_derive;
 #[macro_use]
 extern crate error_chain;
+
+extern crate base16;
+
 #[macro_use]
 mod macros;
 #[macro_use]
@@ -46,6 +49,7 @@ pub mod wallet_ec;
 pub mod word_list;
 pub mod explorer;
 pub mod hex_error;
+pub mod settings;
 
 pub use executor::Executor;
 pub use exit_code::ExitCode;

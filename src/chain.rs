@@ -90,7 +90,7 @@ async_and_sync_methods! {
   { chain_fetch_transaction: fetch_transaction,
     chain_get_transaction: get_transaction,
     in: [(hash, Hash), (require_confirmed, c_int)],
-    out: [ (transaction, TransactionP, Transaction, managed), (height, u64) ]
+    out: [ (transaction, TransactionP, Transaction, managed), (height, u64), (index, u64) ]
   },
   { chain_fetch_transaction_position: fetch_transaction_position,
     chain_get_transaction_position: get_transaction_position,
@@ -137,6 +137,16 @@ impl Chain {
             writex.send(error != ExitCode::NotFound).unwrap();
         });
         readex.recv().unwrap()
+    }
+
+    pub fn broadcast(&self, raw_hash: &str) -> Hash {
+        let transaction = Transaction::from_data(raw_hash);
+        let (writex, readex) = channel();
+        self.organize_transaction(transaction.raw, |_chain, error| {
+            writex.send(error != ExitCode::NotFound).unwrap();
+        });
+        readex.recv().unwrap();
+        transaction.hash()
     }
 }
 

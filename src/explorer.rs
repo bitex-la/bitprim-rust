@@ -9,10 +9,8 @@ use history_compact_list::HistoryCompactList;
 use point::Point;
 use hash::Hash;
 use point_kind::PointKind;
-use transaction::Transaction;
 use destructible::DestructibleBox;
-use input_list::InputList;
-use output_list::OutputList;
+use settings::Setting;
 pub use opaque_collection::*;
 
 pub struct Explorer {
@@ -32,7 +30,7 @@ impl Explorer {
                     collection: history.contents.as_ref(),
                     iter: 0,
                 };
-                iter.map(|i| AddressHistory::from_compact(&i, &c, &self.executor)).collect()
+                iter.map(|i| AddressHistory::from_compact(&i, &self.executor, &c)).collect()
             })
     }
 
@@ -48,9 +46,12 @@ impl Explorer {
                     collection: history.contents.as_ref(),
                     iter: 0,
                 };
-                iter.filter(|i| i.point_kind() == PointKind::Input)
-                    .map(|i| Received::new(&i, self.executor.clone(), c.is_spent(i.point().to_output_point())) )
-                    .collect()
+                let mut vec = 
+                    iter.filter(|i| i.point_kind() == PointKind::Input)
+                        .map(|i| Received::new(&i, &self.executor, c.is_spent(i.point().to_output_point())) )
+                        .collect::<Vec<Received>>();
+                vec.sort_unstable();
+                vec
             })
     }
 
@@ -67,9 +68,8 @@ impl Explorer {
                     iter: 0,
                 };
                 let mut vec = 
-                    iter.filter(|i| i.point_kind() == PointKind::Input)
-                    .filter(|i| c.is_spent(i.point().to_output_point()))
-                    .map(|i| Received::new(&i, self.executor.clone(), false) )
+                    iter.filter(|i| i.point_kind() == PointKind::Input && !c.is_spent(i.point().to_output_point()) )
+                    .map(|i| Received::new(&i, &self.executor, false) )
                     .collect::<Vec<Received>>();
                 vec.sort_unstable();
                 vec
@@ -88,7 +88,7 @@ impl Explorer {
     }
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Received {
     pub satoshis: u64,
     pub transaction_hash: Hash,
@@ -97,24 +97,54 @@ pub struct Received {
     pub block_height: u32,
     pub version: u32,
     pub locktime: u32,
-    pub inputs: InputList,
-    pub outputs: OutputList
+    pub input_details: Vec<InputDetail>,
+    pub output_details: Vec<OutputDetail>
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct InputDetail {
+    pub prev_hash: String,
+    pub prev_index: u32,
+    pub sequence: u32,
+    pub script_sig: String
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct OutputDetail {
+    pub amount: u64,
+    pub address: String,
+    pub script_pubkey: String
 }
 
 impl Received {
-    pub fn new(source: &HistoryCompact, exec: Executor, is_spent: bool) -> Received {
+    pub fn new(source: &HistoryCompact, exec: &Executor, is_spent: bool) -> Received {
         let hash = source.point().hash();
-        let transaction = exec.get_chain().get_transaction(hash.clone(), 1).expect("Error getting transaction from Node");
+        let transaction = exec.get_chain().get_transaction(hash.clone(), 1).expect("Error getting transaction from Node").0;
+        let network = Setting::network(exec);
         Received {
             satoshis: source.get_value_or_previous_checksum(),
             transaction_hash: hash,
             position: source.point().index(),
             block_height: source.height(),
             is_spent,
-            version: transaction.0.version(),
-            locktime: transaction.0.locktime(),
-            inputs: transaction.0.inputs(),
-            outputs: transaction.0.outputs()
+            version: transaction.version(),
+            locktime: transaction.locktime(),
+            input_details: transaction.inputs().into_iter().map(|input| {
+                let output_point = input.previous_output();
+                InputDetail {
+                    prev_hash: output_point.hash().to_hex(),
+                    prev_index: output_point.index(),
+                    sequence: input.sequence(),
+                    script_sig: input.script().to_hex(0)
+                }
+            }).collect(),
+            output_details: transaction.outputs().into_iter().map(|output| {
+                OutputDetail {
+                    amount: output.value(),
+                    address: output.address(network - 1),
+                    script_pubkey: output.script().to_hex(0)
+                }
+            }).collect()
         }
     }
 }
@@ -153,12 +183,12 @@ pub enum AddressHistory {
 }
 
 impl AddressHistory {
-    pub fn from_compact(source: &HistoryCompact, chain: &Chain, exec: &Executor) -> AddressHistory {
+    pub fn from_compact(source: &HistoryCompact, exec: &Executor, chain: &Chain) -> AddressHistory {
         let point = source.point();
         match source.point_kind() {
             PointKind::Input => AddressHistory::Received(Received::new(
                 source,
-                exec.clone(),
+                exec,
                 chain.is_spent(source.point().to_output_point()) 
             )),
             PointKind::Output => AddressHistory::Sent(Sent::new(&point)),

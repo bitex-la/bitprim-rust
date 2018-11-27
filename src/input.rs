@@ -1,6 +1,6 @@
 use std::os::raw::c_int;
 use output_point::{OutputPoint, OutputPointP};
-use script::ScriptP;
+use script::{ Script, ScriptP };
 use destructible::*;
 
 opaque_destructible_resource!{
@@ -26,8 +26,8 @@ impl Input {
         unsafe { chain_input_sequence(self.raw) }
     }
 
-    pub fn script(&self) -> ScriptP {
-        unsafe { chain_input_script(self.raw) }
+    pub fn script(&self) -> Script {
+        Script::new(unsafe { chain_input_script(self.raw) })
     }
 }
 

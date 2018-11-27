@@ -39,7 +39,6 @@ impl<T: Destructible> DestructibleBox<T> {
 
 impl<T: Destructible> Drop for DestructibleBox<T> {
     fn drop(&mut self) {
-        println!("Destruction is here");
         self.contents.destruct()
     }
 }
