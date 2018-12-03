@@ -41,10 +41,10 @@ impl InstallVendor {
     pub fn install(&self) {
         let folders: [&str; 11] = ["bitprim-blockchain", "bitprim-consensus", "bitprim-core", "bitprim-database", 
                                    "bitprim-network", "bitprim-node-cint", "bitprim-node", "boost", "gmp", "icu", "secp256k1"];
-        let files: [&str; 16] = ["libbitprim-blockchain.a", "libbitprim-consensus.a", "libbitprim-core.a", "libbitprim-database.a",
+        let files: [&str; 17] = ["libbitprim-blockchain.a", "libbitprim-consensus.a", "libbitprim-core.a", "libbitprim-database.a",
                                  "libbitprim-network.a", "libbitprim-node-cint.a", "libbitprim-node.a", "libboost_filesystem.a",
                                  "libboost_iostreams.a", "libboost_log.a", "libboost_program_options.a", "libboost_regex.a",
-                                 "libboost_system.a", "libboost_thread.a", "libgmp.a", "libsecp256k1.a"];
+                                 "libboost_system.a", "libboost_thread.a", "libgmp.a", "libsecp256k1.a", "libbitprim-node-cint-version.a"];
 
 
         //TODO: Figure it out how to put it to work
@@ -81,7 +81,7 @@ impl InstallVendor {
         }
     }
 
-    fn find_files(&self, path: &str, files: [&str; 16]) {
+    fn find_files(&self, path: &str, files: [&str; 17]) {
         for entry in WalkDir::new(path) {
 
             let raw_entry = entry.unwrap();
@@ -98,7 +98,7 @@ impl InstallVendor {
         }
     }
 
-    fn copy_files(&self, path: &str, files: [&str; 16]) {
+    fn copy_files(&self, path: &str, files: [&str; 17]) {
         for sub_entry in WalkDir::new(path).into_iter() {
             let dir_entry = sub_entry.unwrap();
             let path_str = dir_entry.path().to_str().unwrap();
