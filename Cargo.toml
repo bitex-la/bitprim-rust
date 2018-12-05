@@ -19,7 +19,6 @@ walkdir = "2"
 pretty_assertions = "0.5.1"
 
 [features]
-default = ["bch", "v0_16_0"]
 bch = []
 btc = []
 ltc = []
