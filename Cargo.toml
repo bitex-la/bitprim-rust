@@ -13,12 +13,18 @@ base16 = "0.1"
 
 [build-dependencies]
 regex = "0.2"
+walkdir = "2"
 
 [dev-dependencies]
 pretty_assertions = "0.5.1"
 
 [features]
-default = ["btc"]
-btc = []
+default = ["bch", "v0_16_0"]
 bch = []
+btc = []
 ltc = []
+v0_10_2 = []
+v0_11_0 = []
+v0_12_0 = []
+v0_14_0 = []
+v0_16_0 = []
