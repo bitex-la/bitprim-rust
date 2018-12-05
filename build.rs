@@ -1,8 +1,10 @@
 extern crate regex;
 extern crate walkdir;
+extern crate dirs;
 
 mod install_vendor;
 
+use std::path::Path;
 use regex::Regex;
 use install_vendor::InstallVendor;
 
@@ -13,6 +15,7 @@ fn main(){
     let install_vendor = InstallVendor::new();
 
     let libs = ["./vendor/bitprim_", install_vendor.currency_target].join("");
+    let previous_exists = Path::new(&libs).exists();
 
     println!(r"cargo:rustc-link-search={}", libs);
 
@@ -26,5 +29,7 @@ fn main(){
         println!(r"cargo:rustc-link-lib=static={}", &captures[1]);
     }
 
-    install_vendor.install();
+    if !previous_exists {
+        install_vendor.install();
+    }
 }

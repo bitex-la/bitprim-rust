@@ -1,8 +1,8 @@
 use std::fs;
 use std::fs::ReadDir;
-use std::env;
 use walkdir::WalkDir;
 use std::io::prelude::*;
+use dirs;
 
 pub struct InstallVendor {
     pub bitprim_version: &'static str,
@@ -46,24 +46,7 @@ impl InstallVendor {
                                  "libboost_iostreams.a", "libboost_log.a", "libboost_program_options.a", "libboost_regex.a",
                                  "libboost_system.a", "libboost_thread.a", "libgmp.a", "libsecp256k1.a", "libbitprim-node-cint-version.a"];
 
-
-        //TODO: Figure it out how to put it to work
-        //if cfg!(target_os = "linux") {
-        //    println!("conan install bitprim-node-exe/{bitprim_version}@bitprim/{env} -o currency={currency_target}",
-        //             bitprim_version = self.bitprim_version, currency_target = self.currency_target.to_uppercase(), env = self.env);
-        //    Command::new(format!("/usr/bin/conan install bitprim-node-exe/{bitprim_version}@bitprim/{env} -o currency={currency_target}",
-        //                         bitprim_version = self.bitprim_version, currency_target = self.currency_target.to_uppercase(), env = self.env))
-        //            .spawn()
-        //            .expect("conan install failed");
-        //    Command::new(format!("/usr/bin/conan install bitprim-node-cint/{bitprim_version}@bitprim/{env} -o currency={currency_target}",
-        //                         bitprim_version = self.bitprim_version, currency_target = self.currency_target.to_uppercase(), env = self.env))
-        //            .spawn()
-        //            .expect("conan install failed");
-        //    if let Err(_) = fs::remove_file("bn") {};
-        //    if let Err(_) = fs::remove_file("deploy_manifest.txt") {};
-        //}
-
-        let home = match env::home_dir() {
+        let home = match dirs::home_dir() {
             Some(path) => format!("{}", path.display()),
             None => panic!("Impossible to get your home dir!")
         };
