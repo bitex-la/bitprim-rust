@@ -13,9 +13,6 @@ use bitprim::explorer::*;
 use bitprim::hash::Hash;
 use std::str::FromStr;
 
-use bitprim::input_list::InputList;
-use bitprim::output_list::OutputList;
-
 #[cfg(feature="btc")]
 const CURRENCY: &str = "btc";
 
@@ -84,7 +81,7 @@ assert_ok!{ runs_500_blocks_async {
 assert_ok!{ gets_last_height_async {
     let exec = build_500_blocks_executor()?;
     exec.run(|exec, _|{
-      exec.get_chain().fetch_last_height(|_chain, exit, height|{
+      exec.get_chain().fetch_last_height(|_chain, _exit, height|{
         assert!(height >= 500, "Height was not over 1000");
       })
     })
@@ -124,7 +121,7 @@ assert_ok!{ explores_an_address {
   let hash1 = Hash::from_hex("58baf615ed9e95023acb05715d3885cc48700ab548072cb5a996056786931fe3").unwrap();
   let hash2 = Hash::from_hex("8ff1a6d53806b2c6e0f9c82d8f1a32cee604e84ee400fc2c7f2a8d7b95ba328c").unwrap();
 
-  if let AddressHistory::Received(ref received) = hist[18] {
+  if let AddressHistory::Received(ref received) = hist[20] {
       assert_eq!(received, &Received{
         satoshis: 450648,
         transaction_hash: hash1,
@@ -156,7 +153,7 @@ assert_ok!{ explores_an_address {
       });
   }
 
-  if let AddressHistory::Received(ref received) = hist[17] {
+  if let AddressHistory::Received(ref received) = hist[19] {
       assert_eq!(received, &Received{
         satoshis: 963007,
         transaction_hash: hash2,
