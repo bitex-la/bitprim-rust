@@ -12,10 +12,8 @@ pub struct InstallVendor {
 impl InstallVendor {
 
     pub fn new() -> InstallVendor {
-        #[cfg(feature = "v0_16_0")]
-        let version = "0.16.0";
-        #[cfg(feature = "v0_11_0")]
-        let version = "0.11.0";
+        #[cfg(feature = "v0_18_0")]
+        let version = "0.18.0";
 
         #[cfg(feature = "bch")]
         let target = "bch";
@@ -39,11 +37,11 @@ impl InstallVendor {
     }
 
     pub fn install(&self) {
-        let folders: [&str; 11] = ["bitprim-blockchain", "bitprim-consensus", "bitprim-core", "bitprim-database", 
+        let folders: [&str; 12] = ["bitprim-blockchain", "bitprim-consensus", "bitprim-core", "bitprim-database", "lmdb",
                                    "bitprim-network", "bitprim-node-cint", "bitprim-node", "boost", "gmp", "icu", "secp256k1"];
-        let files: [&str; 17] = ["libbitprim-blockchain.a", "libbitprim-consensus.a", "libbitprim-core.a", "libbitprim-database.a",
+        let files: [&str; 18] = ["libbitprim-blockchain.a", "libbitprim-consensus.a", "libbitprim-core.a", "libbitprim-database.a",
                                  "libbitprim-network.a", "libbitprim-node-cint.a", "libbitprim-node.a", "libboost_filesystem.a",
-                                 "libboost_iostreams.a", "libboost_log.a", "libboost_program_options.a", "libboost_regex.a",
+                                 "libboost_iostreams.a", "libboost_log.a", "libboost_program_options.a", "libboost_regex.a", "liblmdb.a",
                                  "libboost_system.a", "libboost_thread.a", "libgmp.a", "libsecp256k1.a", "libbitprim-node-cint-version.a"];
 
         let home = match dirs::home_dir() {
@@ -64,7 +62,7 @@ impl InstallVendor {
         }
     }
 
-    fn find_files(&self, path: &str, files: [&str; 17]) {
+    fn find_files(&self, path: &str, files: [&str; 18]) {
         for entry in WalkDir::new(path) {
 
             let raw_entry = entry.unwrap();
@@ -81,7 +79,7 @@ impl InstallVendor {
         }
     }
 
-    fn copy_files(&self, path: &str, files: [&str; 17]) {
+    fn copy_files(&self, path: &str, files: [&str; 18]) {
         for sub_entry in WalkDir::new(path).into_iter() {
             let dir_entry = sub_entry.unwrap();
             let path_str = dir_entry.path().to_str().unwrap();

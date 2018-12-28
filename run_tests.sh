@@ -9,5 +9,5 @@ then
 else
   echo "Ok all done"
   reset
-  cargo test --features "v0_16_0, btc" $1 -- --test-threads=1 --nocapture 
+  cargo test --features "v0_18_0, btc" $1 -- --test-threads=1 --nocapture 
 fi
